@@ -1,0 +1,211 @@
+# Anubis map configuration
+
+name: de_anubis
+display_name: Anubis
+
+# Map boundaries
+bounds:
+  min_x: -2796
+  max_x: 1885
+  min_y: -3362
+  max_y: 2889
+
+# Radar settings
+radar:
+  pos_x: -2796
+  pos_y: 3328
+  scale: 5.22
+
+# Bombsite locations
+bombsites:
+  A:
+    center:
+      x: -200
+      y: 1600
+    radius: 400
+    bounds:
+      min_x: -600
+      max_x: 200
+      min_y: 1200
+      max_y: 2000
+
+  B:
+    center:
+      x: -1600
+      y: -950
+    radius: 380
+    bounds:
+      min_x: -2000
+      max_x: -1200
+      min_y: -1350
+      max_y: -550
+
+# Key zones
+zones:
+  t_spawn:
+    bounds:
+      min_x: -800
+      max_x: 0
+      min_y: -3000
+      max_y: -2200
+
+  mid:
+    bounds:
+      min_x: -1200
+      max_x: -400
+      min_y: -1400
+      max_y: -400
+
+  connector:
+    bounds:
+      min_x: -800
+      max_x: 0
+      min_y: -600
+      max_y: 200
+
+  water:
+    bounds:
+      min_x: -600
+      max_x: 200
+      min_y: 0
+      max_y: 800
+
+  palace:
+    bounds:
+      min_x: 200
+      max_x: 1000
+      min_y: 800
+      max_y: 1600
+
+  a_main:
+    bounds:
+      min_x: -200
+      max_x: 600
+      min_y: 600
+      max_y: 1400
+
+  a_site:
+    bounds:
+      min_x: -700
+      max_x: 300
+      min_y: 1100
+      max_y: 2100
+
+  ruins:
+    bounds:
+      min_x: -800
+      max_x: 0
+      min_y: 1800
+      max_y: 2400
+
+  ct_spawn:
+    bounds:
+      min_x: -1600
+      max_x: -800
+      min_y: 1600
+      max_y: 2400
+
+  canal:
+    bounds:
+      min_x: -2000
+      max_x: -1200
+      min_y: -400
+      max_y: 400
+
+  b_main:
+    bounds:
+      min_x: -1800
+      max_x: -1000
+      min_y: -2000
+      max_y: -1200
+
+  b_site:
+    bounds:
+      min_x: -2100
+      max_x: -1100
+      min_y: -1400
+      max_y: -400
+
+  bridge:
+    bounds:
+      min_x: -2400
+      max_x: -1600
+      min_y: 200
+      max_y: 1000
+
+  alley:
+    bounds:
+      min_x: -2200
+      max_x: -1400
+      min_y: 800
+      max_y: 1600
+
+  street:
+    bounds:
+      min_x: -600
+      max_x: 200
+      min_y: -2200
+      max_y: -1400
+
+# Callouts
+callouts:
+  - name: "T Spawn"
+    x: -400
+    y: -2600
+  - name: "Mid"
+    x: -800
+    y: -900
+  - name: "Connector"
+    x: -400
+    y: -200
+  - name: "Water"
+    x: -200
+    y: 400
+  - name: "Palace"
+    x: 600
+    y: 1200
+  - name: "A Main"
+    x: 200
+    y: 1000
+  - name: "A Site"
+    x: -200
+    y: 1600
+  - name: "Ruins"
+    x: -400
+    y: 2100
+  - name: "Boat"
+    x: -400
+    y: 1400
+  - name: "CT Spawn"
+    x: -1200
+    y: 2000
+  - name: "Canal"
+    x: -1600
+    y: 0
+  - name: "B Main"
+    x: -1400
+    y: -1600
+  - name: "B Site"
+    x: -1600
+    y: -950
+  - name: "Pillar"
+    x: -1600
+    y: -700
+  - name: "Bridge"
+    x: -2000
+    y: 600
+  - name: "Alley"
+    x: -1800
+    y: 1200
+  - name: "Street"
+    x: -200
+    y: -1800
+  - name: "Walkway"
+    x: -1000
+    y: -1200
+  - name: "Heaven"
+    x: -1400
+    y: -500
+  - name: "Doors"
+    x: 0
+    y: 1800

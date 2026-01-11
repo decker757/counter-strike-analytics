@@ -1,0 +1,237 @@
+# Inferno map configuration
+
+name: de_inferno
+display_name: Inferno
+
+# Map boundaries
+bounds:
+  min_x: -2087
+  max_x: 3870
+  min_y: -1140
+  max_y: 2905
+
+# Radar settings
+radar:
+  pos_x: -2087
+  pos_y: 3870
+  scale: 4.9
+
+# Bombsite locations
+bombsites:
+  A:
+    center:
+      x: 2175
+      y: 890
+    radius: 400
+    bounds:
+      min_x: 1775
+      max_x: 2575
+      min_y: 490
+      max_y: 1290
+
+  B:
+    center:
+      x: 165
+      y: 2820
+    radius: 380
+    bounds:
+      min_x: -215
+      max_x: 545
+      min_y: 2440
+      max_y: 3200
+
+# Key zones
+zones:
+  t_spawn:
+    bounds:
+      min_x: -500
+      max_x: 400
+      min_y: -1100
+      max_y: -400
+
+  mid:
+    bounds:
+      min_x: -200
+      max_x: 800
+      min_y: -400
+      max_y: 600
+
+  second_mid:
+    bounds:
+      min_x: 600
+      max_x: 1400
+      min_y: -200
+      max_y: 600
+
+  top_mid:
+    bounds:
+      min_x: 400
+      max_x: 1200
+      min_y: 600
+      max_y: 1200
+
+  apartments:
+    bounds:
+      min_x: 1200
+      max_x: 2000
+      min_y: -200
+      max_y: 600
+
+  long_a:
+    bounds:
+      min_x: 1600
+      max_x: 2400
+      min_y: 100
+      max_y: 700
+
+  short_a:
+    bounds:
+      min_x: 1400
+      max_x: 2000
+      min_y: 600
+      max_y: 1200
+
+  a_site:
+    bounds:
+      min_x: 1700
+      max_x: 2600
+      min_y: 400
+      max_y: 1400
+
+  pit:
+    bounds:
+      min_x: 2400
+      max_x: 3000
+      min_y: 200
+      max_y: 800
+
+  library:
+    bounds:
+      min_x: 2200
+      max_x: 2800
+      min_y: 1000
+      max_y: 1600
+
+  arch:
+    bounds:
+      min_x: 1600
+      max_x: 2200
+      min_y: 1400
+      max_y: 2000
+
+  banana:
+    bounds:
+      min_x: -600
+      max_x: 200
+      min_y: 600
+      max_y: 1800
+
+  car:
+    bounds:
+      min_x: -200
+      max_x: 400
+      min_y: 1600
+      max_y: 2200
+
+  construction:
+    bounds:
+      min_x: -400
+      max_x: 200
+      min_y: 2000
+      max_y: 2600
+
+  b_site:
+    bounds:
+      min_x: -300
+      max_x: 600
+      min_y: 2400
+      max_y: 3200
+
+  ct_spawn:
+    bounds:
+      min_x: 1400
+      max_x: 2200
+      min_y: 1800
+      max_y: 2600
+
+  ct_apps:
+    bounds:
+      min_x: 800
+      max_x: 1400
+      min_y: 2000
+      max_y: 2800
+
+# Callouts
+callouts:
+  - name: "T Spawn"
+    x: -50
+    y: -750
+  - name: "Mid"
+    x: 300
+    y: 100
+  - name: "Second Mid"
+    x: 1000
+    y: 200
+  - name: "Top Mid"
+    x: 800
+    y: 900
+  - name: "Alt Mid"
+    x: 600
+    y: 400
+  - name: "Apartments"
+    x: 1600
+    y: 200
+  - name: "Boiler"
+    x: 1300
+    y: 400
+  - name: "Long A"
+    x: 2000
+    y: 400
+  - name: "Short A"
+    x: 1700
+    y: 900
+  - name: "A Site"
+    x: 2175
+    y: 890
+  - name: "Pit"
+    x: 2700
+    y: 500
+  - name: "Graveyard"
+    x: 2100
+    y: 1200
+  - name: "Library"
+    x: 2500
+    y: 1300
+  - name: "Arch"
+    x: 1900
+    y: 1700
+  - name: "Banana"
+    x: -200
+    y: 1200
+  - name: "Car"
+    x: 100
+    y: 1900
+  - name: "Construction"
+    x: -100
+    y: 2300
+  - name: "B Site"
+    x: 165
+    y: 2820
+  - name: "First Oranges"
+    x: 150
+    y: 2600
+  - name: "Spools"
+    x: 350
+    y: 2900
+  - name: "Dark"
+    x: 400
+    y: 3100
+  - name: "CT Spawn"
+    x: 1800
+    y: 2200
+  - name: "CT Apps"
+    x: 1100
+    y: 2400
+  - name: "Speedway"
+    x: 800
+    y: 2700

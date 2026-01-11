@@ -1,0 +1,134 @@
+# CS2 Weapons configuration
+
+categories:
+  pistol:
+    - glock
+    - usp_silencer
+    - p2000
+    - p250
+    - fiveseven
+    - tec9
+    - cz75_auto
+    - deagle
+    - revolver
+
+  smg:
+    - mac10
+    - mp9
+    - mp7
+    - mp5sd
+    - ump45
+    - p90
+    - bizon
+
+  rifle:
+    - famas
+    - galil
+    - m4a1
+    - m4a1_silencer
+    - ak47
+    - aug
+    - sg553
+
+  sniper:
+    - ssg08         # Scout
+    - awp
+    - g3sg1         # CT auto
+    - scar20        # T auto
+
+  shotgun:
+    - nova
+    - xm1014
+    - sawedoff
+    - mag7
+
+  machine_gun:
+    - m249
+    - negev
+
+  knife:
+    - knife
+    - knife_t
+    - knife_ct
+
+  grenade:
+    - flashbang
+    - smokegrenade
+    - hegrenade
+    - molotov
+    - incgrenade
+    - decoy
+
+# Weapon prices
+prices:
+  # Pistols
+  glock: 0           # Default T
+  usp_silencer: 0    # Default CT
+  p2000: 0           # Default CT alternative
+  p250: 300
+  fiveseven: 500
+  tec9: 500
+  cz75_auto: 500
+  deagle: 700
+  revolver: 600
+
+  # SMGs
+  mac10: 1050
+  mp9: 1250
+  mp7: 1500
+  mp5sd: 1500
+  ump45: 1200
+  p90: 2350
+  bizon: 1400
+
+  # Rifles
+  famas: 2050
+  galil: 1800
+  m4a1: 3100
+  m4a1_silencer: 2900
+  ak47: 2700
+  aug: 3300
+  sg553: 3000
+
+  # Snipers
+  ssg08: 1700
+  awp: 4750
+  g3sg1: 5000
+  scar20: 5000
+
+  # Shotguns
+  nova: 1050
+  xm1014: 2000
+  sawedoff: 1100
+  mag7: 1300
+
+  # Machine guns
+  m249: 5200
+  negev: 1700
+
+  # Grenades
+  flashbang: 200
+  smokegrenade: 300
+  hegrenade: 300
+  molotov: 400
+  incgrenade: 600
+  decoy: 50
+
+# Kill rewards by weapon
+kill_rewards:
+  default: 300
+  knife: 1500
+  awp: 100
+  # SMGs
+  mac10: 600
+  mp9: 600
+  mp7: 600
+  mp5sd: 600
+  ump45: 600
+  p90: 300
+  bizon: 600
+  # Shotguns
+  nova: 900
+  xm1014: 900
+  sawedoff: 900
+  mag7: 900

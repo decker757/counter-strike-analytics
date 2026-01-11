@@ -1,0 +1,207 @@
+# Mirage map configuration
+
+name: de_mirage
+display_name: Mirage
+
+# Map boundaries
+bounds:
+  min_x: -3230
+  max_x: 1855
+  min_y: -3405
+  max_y: 1655
+
+# Radar settings
+radar:
+  pos_x: -3230
+  pos_y: 1713
+  scale: 5.0
+
+# Bombsite locations
+bombsites:
+  A:
+    center:
+      x: -286
+      y: -1639
+    radius: 400
+    bounds:
+      min_x: -686
+      max_x: 114
+      min_y: -2039
+      max_y: -1239
+
+  B:
+    center:
+      x: -2035
+      y: 750
+    radius: 350
+    bounds:
+      min_x: -2385
+      max_x: -1685
+      min_y: 400
+      max_y: 1100
+
+# Key zones
+zones:
+  t_spawn:
+    bounds:
+      min_x: 1000
+      max_x: 1800
+      min_y: -2800
+      max_y: -2000
+
+  t_ramp:
+    bounds:
+      min_x: 200
+      max_x: 1000
+      min_y: -2500
+      max_y: -1800
+
+  mid:
+    bounds:
+      min_x: -800
+      max_x: 200
+      min_y: -2000
+      max_y: -600
+
+  top_mid:
+    bounds:
+      min_x: -1200
+      max_x: -400
+      min_y: -600
+      max_y: 200
+
+  window:
+    bounds:
+      min_x: -1400
+      max_x: -800
+      min_y: -800
+      max_y: -200
+
+  connector:
+    bounds:
+      min_x: -1600
+      max_x: -800
+      min_y: -200
+      max_y: 600
+
+  a_ramp:
+    bounds:
+      min_x: -400
+      max_x: 200
+      min_y: -2000
+      max_y: -1400
+
+  a_site:
+    bounds:
+      min_x: -800
+      max_x: 200
+      min_y: -2200
+      max_y: -1200
+
+  palace:
+    bounds:
+      min_x: 200
+      max_x: 800
+      min_y: -1800
+      max_y: -1000
+
+  apartments:
+    bounds:
+      min_x: -2600
+      max_x: -1800
+      min_y: -600
+      max_y: 400
+
+  b_site:
+    bounds:
+      min_x: -2500
+      max_x: -1600
+      min_y: 300
+      max_y: 1200
+
+  ct_spawn:
+    bounds:
+      min_x: -2400
+      max_x: -1600
+      min_y: -1400
+      max_y: -600
+
+  jungle:
+    bounds:
+      min_x: -1000
+      max_x: -400
+      min_y: -1600
+      max_y: -1000
+
+  stairs:
+    bounds:
+      min_x: -600
+      max_x: 0
+      min_y: -1200
+      max_y: -600
+
+# Callouts
+callouts:
+  - name: "T Spawn"
+    x: 1400
+    y: -2400
+  - name: "T Ramp"
+    x: 600
+    y: -2100
+  - name: "Mid"
+    x: -300
+    y: -1300
+  - name: "Top Mid"
+    x: -800
+    y: -200
+  - name: "Window"
+    x: -1100
+    y: -500
+  - name: "Connector"
+    x: -1200
+    y: 200
+  - name: "A Ramp"
+    x: -100
+    y: -1700
+  - name: "A Site"
+    x: -300
+    y: -1650
+  - name: "Palace"
+    x: 500
+    y: -1400
+  - name: "Apartments"
+    x: -2200
+    y: -100
+  - name: "B Site"
+    x: -2050
+    y: 750
+  - name: "CT Spawn"
+    x: -2000
+    y: -1000
+  - name: "Jungle"
+    x: -700
+    y: -1300
+  - name: "Stairs"
+    x: -300
+    y: -900
+  - name: "Ticket"
+    x: -200
+    y: -2000
+  - name: "Triple"
+    x: -500
+    y: -1800
+  - name: "Firebox"
+    x: -150
+    y: -1500
+  - name: "Bench"
+    x: -2300
+    y: 600
+  - name: "Market"
+    x: -2400
+    y: -200
+  - name: "Short"
+    x: -1400
+    y: 400
+  - name: "Cat"
+    x: -1000
+    y: -1000

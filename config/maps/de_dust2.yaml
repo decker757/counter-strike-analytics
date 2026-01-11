@@ -1,0 +1,185 @@
+# Dust 2 map configuration
+
+name: de_dust2
+display_name: Dust II
+
+# Map boundaries (for minimap rendering)
+bounds:
+  min_x: -2476
+  max_x: 2127
+  min_y: -1261
+  max_y: 3239
+
+# Radar/overview image settings
+radar:
+  pos_x: -2476
+  pos_y: 3239
+  scale: 4.4
+
+# Bombsite locations
+bombsites:
+  A:
+    center:
+      x: 1272
+      y: 2424
+    radius: 350
+    bounds:
+      min_x: 922
+      max_x: 1622
+      min_y: 2074
+      max_y: 2774
+
+  B:
+    center:
+      x: -1388
+      y: 2592
+    radius: 300
+    bounds:
+      min_x: -1688
+      max_x: -1088
+      min_y: 2292
+      max_y: 2892
+
+# Key zones for positioning analysis
+zones:
+  # T spawn and approaches
+  t_spawn:
+    bounds:
+      min_x: -648
+      max_x: 248
+      min_y: -800
+      max_y: -200
+
+  t_ramp:
+    bounds:
+      min_x: -200
+      max_x: 600
+      min_y: -200
+      max_y: 600
+
+  # Mid
+  mid_doors:
+    bounds:
+      min_x: -600
+      max_x: 0
+      min_y: 600
+      max_y: 1200
+
+  mid:
+    bounds:
+      min_x: -800
+      max_x: 400
+      min_y: 1200
+      max_y: 2000
+
+  # Long A
+  long_doors:
+    bounds:
+      min_x: 1100
+      max_x: 1600
+      min_y: 0
+      max_y: 600
+
+  long_a:
+    bounds:
+      min_x: 1100
+      max_x: 1700
+      min_y: 600
+      max_y: 1600
+
+  a_site:
+    bounds:
+      min_x: 800
+      max_x: 1700
+      min_y: 2000
+      max_y: 2800
+
+  # Short A (Catwalk)
+  catwalk:
+    bounds:
+      min_x: 200
+      max_x: 900
+      min_y: 1800
+      max_y: 2400
+
+  # B tunnels
+  upper_tunnels:
+    bounds:
+      min_x: -1100
+      max_x: -400
+      min_y: 400
+      max_y: 1200
+
+  lower_tunnels:
+    bounds:
+      min_x: -1800
+      max_x: -1100
+      min_y: 800
+      max_y: 1600
+
+  b_site:
+    bounds:
+      min_x: -1800
+      max_x: -1000
+      min_y: 2200
+      max_y: 3000
+
+  # CT areas
+  ct_spawn:
+    bounds:
+      min_x: -400
+      max_x: 400
+      min_y: 2600
+      max_y: 3200
+
+  ct_mid:
+    bounds:
+      min_x: -200
+      max_x: 600
+      min_y: 2000
+      max_y: 2600
+
+# Common callout positions (for labeling)
+callouts:
+  - name: "Long Doors"
+    x: 1350
+    y: 300
+  - name: "Pit"
+    x: 1550
+    y: 1800
+  - name: "A Site"
+    x: 1300
+    y: 2400
+  - name: "Goose"
+    x: 1550
+    y: 2600
+  - name: "Short"
+    x: 550
+    y: 2100
+  - name: "Catwalk"
+    x: 400
+    y: 1900
+  - name: "Mid Doors"
+    x: -300
+    y: 900
+  - name: "Top Mid"
+    x: -100
+    y: 1600
+  - name: "CT Spawn"
+    x: 0
+    y: 2900
+  - name: "B Doors"
+    x: -1200
+    y: 2200
+  - name: "B Site"
+    x: -1400
+    y: 2600
+  - name: "Upper Tunnels"
+    x: -750
+    y: 800
+  - name: "Lower Tunnels"
+    x: -1450
+    y: 1200
+  - name: "T Spawn"
+    x: -200
+    y: -500

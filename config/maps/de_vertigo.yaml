@@ -1,0 +1,204 @@
+# Vertigo map configuration
+
+name: de_vertigo
+display_name: Vertigo
+
+# Map boundaries
+bounds:
+  min_x: -3168
+  max_x: 2047
+  min_y: -2463
+  max_y: 1536
+
+# Radar settings
+radar:
+  pos_x: -3168
+  pos_y: 1536
+  scale: 4.0
+
+# Bombsite locations
+bombsites:
+  A:
+    center:
+      x: -1400
+      y: 500
+    radius: 400
+    bounds:
+      min_x: -1800
+      max_x: -1000
+      min_y: 100
+      max_y: 900
+
+  B:
+    center:
+      x: -300
+      y: -550
+    radius: 380
+    bounds:
+      min_x: -700
+      max_x: 100
+      min_y: -950
+      max_y: -150
+
+# Key zones
+zones:
+  t_spawn:
+    bounds:
+      min_x: -600
+      max_x: 200
+      min_y: -2200
+      max_y: -1400
+
+  t_mid:
+    bounds:
+      min_x: -800
+      max_x: 0
+      min_y: -1400
+      max_y: -600
+
+  mid:
+    bounds:
+      min_x: -1200
+      max_x: -400
+      min_y: -800
+      max_y: 0
+
+  ramp:
+    bounds:
+      min_x: -1800
+      max_x: -1000
+      min_y: -600
+      max_y: 200
+
+  a_site:
+    bounds:
+      min_x: -2000
+      max_x: -900
+      min_y: 0
+      max_y: 1000
+
+  a_ramp:
+    bounds:
+      min_x: -2200
+      max_x: -1400
+      min_y: 800
+      max_y: 1400
+
+  ct_spawn:
+    bounds:
+      min_x: -2400
+      max_x: -1600
+      min_y: -200
+      max_y: 600
+
+  headshot:
+    bounds:
+      min_x: -2000
+      max_x: -1200
+      min_y: -400
+      max_y: 200
+
+  b_main:
+    bounds:
+      min_x: 0
+      max_x: 800
+      min_y: -1200
+      max_y: -400
+
+  b_site:
+    bounds:
+      min_x: -800
+      max_x: 200
+      min_y: -1100
+      max_y: -100
+
+  b_stairs:
+    bounds:
+      min_x: 0
+      max_x: 600
+      min_y: -600
+      max_y: 200
+
+  elevator:
+    bounds:
+      min_x: -400
+      max_x: 200
+      min_y: 0
+      max_y: 600
+
+  scaffolding:
+    bounds:
+      min_x: -2800
+      max_x: -2000
+      min_y: -600
+      max_y: 200
+
+  generator:
+    bounds:
+      min_x: -2600
+      max_x: -1800
+      min_y: 200
+      max_y: 800
+
+# Callouts
+callouts:
+  - name: "T Spawn"
+    x: -200
+    y: -1800
+  - name: "T Mid"
+    x: -400
+    y: -1000
+  - name: "Mid"
+    x: -800
+    y: -400
+  - name: "Ramp"
+    x: -1400
+    y: -200
+  - name: "A Site"
+    x: -1400
+    y: 500
+  - name: "A Ramp"
+    x: -1800
+    y: 1100
+  - name: "CT Spawn"
+    x: -2000
+    y: 200
+  - name: "Headshot"
+    x: -1600
+    y: -100
+  - name: "B Main"
+    x: 400
+    y: -800
+  - name: "B Site"
+    x: -300
+    y: -550
+  - name: "B Stairs"
+    x: 300
+    y: -200
+  - name: "Elevator"
+    x: -100
+    y: 300
+  - name: "Sandbags"
+    x: -1200
+    y: 700
+  - name: "Default"
+    x: -1500
+    y: 400
+  - name: "Scaffolding"
+    x: -2400
+    y: -200
+  - name: "Generator"
+    x: -2200
+    y: 500
+  - name: "Window"
+    x: -1100
+    y: 200
+  - name: "Boost"
+    x: -200
+    y: -800
+  - name: "Big Box"
+    x: -500
+    y: -400
+  - name: "Logs"
+    x: 100
+    y: -600

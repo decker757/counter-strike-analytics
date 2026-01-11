@@ -1,0 +1,204 @@
+# Ancient map configuration
+
+name: de_ancient
+display_name: Ancient
+
+# Map boundaries
+bounds:
+  min_x: -2953
+  max_x: 2164
+  min_y: -2318
+  max_y: 2658
+
+# Radar settings
+radar:
+  pos_x: -2953
+  pos_y: 2164
+  scale: 5.0
+
+# Bombsite locations
+bombsites:
+  A:
+    center:
+      x: -450
+      y: 1200
+    radius: 400
+    bounds:
+      min_x: -850
+      max_x: -50
+      min_y: 800
+      max_y: 1600
+
+  B:
+    center:
+      x: -1900
+      y: -450
+    radius: 380
+    bounds:
+      min_x: -2280
+      max_x: -1520
+      min_y: -830
+      max_y: -70
+
+# Key zones
+zones:
+  t_spawn:
+    bounds:
+      min_x: 1200
+      max_x: 2000
+      min_y: -400
+      max_y: 400
+
+  mid:
+    bounds:
+      min_x: -200
+      max_x: 600
+      min_y: -400
+      max_y: 600
+
+  cave:
+    bounds:
+      min_x: 400
+      max_x: 1200
+      min_y: -800
+      max_y: 0
+
+  donut:
+    bounds:
+      min_x: -600
+      max_x: 200
+      min_y: 200
+      max_y: 800
+
+  main:
+    bounds:
+      min_x: -400
+      max_x: 400
+      min_y: 600
+      max_y: 1200
+
+  a_site:
+    bounds:
+      min_x: -1000
+      max_x: 0
+      min_y: 700
+      max_y: 1700
+
+  elbow:
+    bounds:
+      min_x: -1200
+      max_x: -400
+      min_y: 1400
+      max_y: 2000
+
+  ct_spawn:
+    bounds:
+      min_x: -1600
+      max_x: -800
+      min_y: 1800
+      max_y: 2400
+
+  ramp:
+    bounds:
+      min_x: -1000
+      max_x: -200
+      min_y: -600
+      max_y: 200
+
+  house:
+    bounds:
+      min_x: -1400
+      max_x: -600
+      min_y: -400
+      max_y: 200
+
+  b_ramp:
+    bounds:
+      min_x: -1600
+      max_x: -800
+      min_y: -1200
+      max_y: -400
+
+  b_site:
+    bounds:
+      min_x: -2400
+      max_x: -1400
+      min_y: -1000
+      max_y: 0
+
+  alley:
+    bounds:
+      min_x: -2200
+      max_x: -1400
+      min_y: 0
+      max_y: 800
+
+  water:
+    bounds:
+      min_x: 0
+      max_x: 800
+      min_y: -1400
+      max_y: -600
+
+# Callouts
+callouts:
+  - name: "T Spawn"
+    x: 1600
+    y: 0
+  - name: "Mid"
+    x: 200
+    y: 100
+  - name: "Cave"
+    x: 800
+    y: -400
+  - name: "Donut"
+    x: -200
+    y: 500
+  - name: "Main"
+    x: 0
+    y: 900
+  - name: "A Site"
+    x: -450
+    y: 1200
+  - name: "Elbow"
+    x: -800
+    y: 1700
+  - name: "CT Spawn"
+    x: -1200
+    y: 2100
+  - name: "Ramp"
+    x: -600
+    y: -200
+  - name: "House"
+    x: -1000
+    y: -100
+  - name: "Temple"
+    x: -800
+    y: 400
+  - name: "B Ramp"
+    x: -1200
+    y: -800
+  - name: "B Site"
+    x: -1900
+    y: -450
+  - name: "Alley"
+    x: -1800
+    y: 400
+  - name: "Water"
+    x: 400
+    y: -1000
+  - name: "Jaguar"
+    x: -400
+    y: 1400
+  - name: "Red"
+    x: -700
+    y: 1000
+  - name: "Ninja"
+    x: -200
+    y: 1500
+  - name: "Tunnel"
+    x: -2000
+    y: -800
+  - name: "Back B"
+    x: -2200
+    y: -200

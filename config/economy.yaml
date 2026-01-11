@@ -1,0 +1,48 @@
+# Economy configuration for CS2
+# All values in dollars
+
+# Starting money
+starting_money:
+  pistol_round: 800
+  half_start: 800  # Round 13/MR12 second half
+
+# Buy type thresholds (average team money)
+buy_thresholds:
+  eco_max: 2000      # Below this = eco
+  force_max: 3700    # Below this = force buy (above eco)
+  # Above force_max = full buy
+
+# Loss bonus progression (cumulative)
+loss_bonus:
+  base: 1400         # First round loss
+  increment: 500     # Each subsequent loss
+  max_streak: 4      # Maximum loss bonus (4 losses = max)
+  # Loss bonus values: 1400, 1900, 2400, 2900, 3400
+
+# Round win rewards
+win_rewards:
+  elimination: 3250
+  defuse: 3250
+  bomb_explode: 3500
+  time_expired: 3250
+
+# Kill rewards (by weapon category)
+kill_rewards:
+  knife: 1500
+  pistol: 300
+  smg: 600
+  rifle: 300
+  sniper: 100        # AWP
+  shotgun: 900
+  machine_gun: 300
+
+# Bomb-related rewards
+bomb_rewards:
+  plant: 300         # To planter
+  team_plant: 0      # To team (in addition to round result)
+
+# Equipment costs (common items)
+equipment_costs:
+  kevlar: 650
+  helmet: 350
+  defuse_kit: 400

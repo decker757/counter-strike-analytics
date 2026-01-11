@@ -1,0 +1,227 @@
+# Nuke map configuration
+
+name: de_nuke
+display_name: Nuke
+
+# Map boundaries
+bounds:
+  min_x: -3453
+  max_x: 3447
+  min_y: -4290
+  max_y: 1793
+
+# Radar settings
+radar:
+  pos_x: -3453
+  pos_y: 2887
+  scale: 7.0
+
+# Bombsite locations
+bombsites:
+  A:
+    center:
+      x: 640
+      y: -820
+    radius: 450
+    bounds:
+      min_x: 190
+      max_x: 1090
+      min_y: -1270
+      max_y: -370
+
+  B:
+    center:
+      x: 465
+      y: -1540
+    radius: 400
+    bounds:
+      min_x: 65
+      max_x: 865
+      min_y: -1940
+      max_y: -1140
+
+# Key zones
+zones:
+  t_spawn:
+    bounds:
+      min_x: -1200
+      max_x: -400
+      min_y: -3800
+      max_y: -3000
+
+  t_roof:
+    bounds:
+      min_x: -800
+      max_x: 400
+      min_y: -3000
+      max_y: -2200
+
+  outside:
+    bounds:
+      min_x: -2800
+      max_x: -1200
+      min_y: -2400
+      max_y: -800
+
+  secret:
+    bounds:
+      min_x: -2200
+      max_x: -1400
+      min_y: -800
+      max_y: 0
+
+  lobby:
+    bounds:
+      min_x: -600
+      max_x: 200
+      min_y: -2200
+      max_y: -1400
+
+  ramp:
+    bounds:
+      min_x: -400
+      max_x: 400
+      min_y: -1600
+      max_y: -800
+
+  control:
+    bounds:
+      min_x: 400
+      max_x: 1200
+      min_y: -1600
+      max_y: -800
+
+  a_site:
+    bounds:
+      min_x: 100
+      max_x: 1200
+      min_y: -1400
+      max_y: -200
+
+  hut:
+    bounds:
+      min_x: 0
+      max_x: 400
+      min_y: -1000
+      max_y: -400
+
+  heaven:
+    bounds:
+      min_x: -200
+      max_x: 600
+      min_y: -600
+      max_y: 200
+
+  hell:
+    bounds:
+      min_x: 600
+      max_x: 1200
+      min_y: -600
+      max_y: 0
+
+  vents:
+    bounds:
+      min_x: -800
+      max_x: 0
+      min_y: -1200
+      max_y: -400
+
+  b_site:
+    bounds:
+      min_x: 0
+      max_x: 1000
+      min_y: -2000
+      max_y: -1100
+
+  decon:
+    bounds:
+      min_x: -600
+      max_x: 0
+      min_y: -2000
+      max_y: -1400
+
+  ct_spawn:
+    bounds:
+      min_x: -200
+      max_x: 600
+      min_y: 200
+      max_y: 1000
+
+  garage:
+    bounds:
+      min_x: -1600
+      max_x: -800
+      min_y: -400
+      max_y: 400
+
+# Callouts
+callouts:
+  - name: "T Spawn"
+    x: -800
+    y: -3400
+  - name: "T Roof"
+    x: -200
+    y: -2600
+  - name: "Silo"
+    x: -1800
+    y: -2200
+  - name: "Outside"
+    x: -2000
+    y: -1600
+  - name: "Secret"
+    x: -1800
+    y: -400
+  - name: "Lobby"
+    x: -200
+    y: -1800
+  - name: "Ramp"
+    x: 0
+    y: -1200
+  - name: "Control"
+    x: 800
+    y: -1200
+  - name: "A Site"
+    x: 640
+    y: -820
+  - name: "Hut"
+    x: 200
+    y: -700
+  - name: "Heaven"
+    x: 200
+    y: -200
+  - name: "Hell"
+    x: 900
+    y: -300
+  - name: "Mini"
+    x: 400
+    y: -600
+  - name: "Rafters"
+    x: 700
+    y: -400
+  - name: "Squeaky"
+    x: -100
+    y: -1000
+  - name: "Vents"
+    x: -400
+    y: -800
+  - name: "B Site"
+    x: 465
+    y: -1540
+  - name: "Decon"
+    x: -300
+    y: -1700
+  - name: "CT Spawn"
+    x: 200
+    y: 600
+  - name: "Garage"
+    x: -1200
+    y: 0
+  - name: "Trophy"
+    x: -200
+    y: 200
+  - name: "Radio"
+    x: 200
+    y: -300
+  - name: "Mustang"
+    x: -1600
+    y: -1200
