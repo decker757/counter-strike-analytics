@@ -26,3 +26,7 @@ xgboost>=2.0
 tqdm>=4.66
 joblib>=1.3
 loguru>=0.7
+
+# APIs
+fastapi==0.128.0
+uvicorn[standard]

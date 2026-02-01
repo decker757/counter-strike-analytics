@@ -1,10 +1,16 @@
 export type Team = "T" | "CT";
 
 export interface Player {
-    id: string;
+    tick: number;
+    steamid: string;
     name: string;
-    x: number;
-    y: number;
-    team: Team;
-    alive: boolean;
+    //team_name: string
+    X: number;
+    Y: number;
+    Z: number;
+    //health: number;
+    is_alive: boolean;
+    //active_weapon: string;
+    team_name: Team;
+    //alive: boolean;
 }
