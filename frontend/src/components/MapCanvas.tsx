@@ -2,13 +2,37 @@ import { Stage, Layer, Image } from "react-konva";
 import { useEffect, useState } from "react";
 import PlayerMarker from "./PlayerMarker";
 import type { Player } from "../types/Player";
-import dust2 from "../assets/maps/dust2.png"
+import dust2 from "../assets/maps/dust2.png";
+import inferno from "../assets/maps/dust2.png";
+
+const MAP_CONFIG = {
+  dust2: {
+    minX: -2203,
+    maxX: 1768,
+    minY: -1163,
+    maxY: 3117,
+  },
+  inferno: {
+    minX: -1730,
+    maxX: 2664,
+    minY: -769,
+    maxY: 3514,
+  }
+}
+
 
 const DUST2_CONFIG = {
   minX: -2203,
   maxX: 1768,
   minY: -1163,
   maxY: 3117,
+} 
+
+const INFERNO_CONFIG = {
+  minX: -1730,
+  maxX: 2664,
+  minY: -769,
+  maxY: 3514,
 }
 
 interface MapCanvasProps {
@@ -85,19 +109,10 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
   const { scale, width, height } = getScaleFactor();
 
   const getCanvasCoords = (gameX: number, gameY: number) => {
-    /*
-    // 1. Translate Game Coords to 1024x1024 Radar pixels
-    const radarX = (gameX - DUST2_CONFIG.pos_x) / DUST2_CONFIG.scale;
-    const radarY = (DUST2_CONFIG.pos_y - gameY) / DUST2_CONFIG.scale;
-
-    // 2. Scale those pixels to match your actual onscreen map size
-    // Your code uses (radar / 1024) to find the percentage across the map
-    const canvasX = (radarX * (width / 1024)) + ((dimensions.width - width) / 2);
-    const canvasY = (radarY * (height / 1024)) + ((dimensions.height - height) / 2);
-    */
 
     if (gameX === undefined || gameY === undefined) return { x: 0, y: 0 };
 
+    /*
     // 1. Calculate the percentage of where the player is within the boundaries
     const percentX = (gameX - DUST2_CONFIG.minX) / (DUST2_CONFIG.maxX - DUST2_CONFIG.minX);
     const percentY = (DUST2_CONFIG.maxY - gameY) / (DUST2_CONFIG.maxY - DUST2_CONFIG.minY);
@@ -110,6 +125,18 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
     // 'width', 'height', and 'dimensions' come from your existing state
     const canvasX = (imageX * (width / 1000)) + ((dimensions.width - width) / 2);
     const canvasY = (imageY * (height / 1000)) + ((dimensions.height - height) / 2);
+    */
+
+    const xcoorperpixel = (DUST2_CONFIG.maxX - DUST2_CONFIG.minX) / width;
+    const ycoorperpixel = (DUST2_CONFIG.maxY - DUST2_CONFIG.minY) / height;
+
+    const gameXnorm = gameX - DUST2_CONFIG.minX;
+    const gameYnorm = DUST2_CONFIG.maxY - gameY;
+
+    const offsetX = (dimensions.width - width) / 2;
+
+    const canvasX = (gameXnorm / xcoorperpixel) + offsetX;
+    const canvasY = (gameYnorm / ycoorperpixel);
 
     return { x: canvasX, y: canvasY };
 };
