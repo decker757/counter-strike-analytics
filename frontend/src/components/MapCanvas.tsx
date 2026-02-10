@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import PlayerMarker from "./PlayerMarker";
 import type { Player } from "../types/Player";
 import dust2 from "../assets/maps/dust2.png";
-import inferno from "../assets/maps/dust2.png";
+import inferno from "../assets/maps/inferno.png";
 
 const MAP_CONFIG = {
   dust2: {
@@ -50,7 +50,8 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
   //Map loading hook
   useEffect(() => {
     const img = new window.Image();
-    img.src = dust2;
+    //img.src = dust2;
+    img.src = inferno;
     img.onload = () => setMapImage(img);
   }, []);
 
@@ -70,7 +71,7 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
   //data fetching hook
   useEffect(() => {
     const fetchTickData = async () => {
-      if (Number.isInteger(currentTick) == false) {
+      if (Number.isInteger(currentTick) == false || currentTick % 2 != 0) {
         return
       }
       try {
@@ -127,11 +128,17 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
     const canvasY = (imageY * (height / 1000)) + ((dimensions.height - height) / 2);
     */
 
-    const xcoorperpixel = (DUST2_CONFIG.maxX - DUST2_CONFIG.minX) / width;
-    const ycoorperpixel = (DUST2_CONFIG.maxY - DUST2_CONFIG.minY) / height;
+    //const xcoorperpixel = (DUST2_CONFIG.maxX - DUST2_CONFIG.minX) / width;
+    //const ycoorperpixel = (DUST2_CONFIG.maxY - DUST2_CONFIG.minY) / height;
 
-    const gameXnorm = gameX - DUST2_CONFIG.minX;
-    const gameYnorm = DUST2_CONFIG.maxY - gameY;
+    const xcoorperpixel = (INFERNO_CONFIG.maxX - INFERNO_CONFIG.minX) / width;
+    const ycoorperpixel = (INFERNO_CONFIG.maxY - INFERNO_CONFIG.minY) / height;
+
+    //const gameXnorm = gameX - DUST2_CONFIG.minX;
+    //const gameYnorm = DUST2_CONFIG.maxY - gameY;
+
+    const gameXnorm = gameX - INFERNO_CONFIG.minX;
+    const gameYnorm = INFERNO_CONFIG.maxY - gameY;
 
     const offsetX = (dimensions.width - width) / 2;
 
