@@ -2,7 +2,8 @@
 
 from enum import Enum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+import math
 
 
 class WeaponCategory(str, Enum):
@@ -53,6 +54,14 @@ class Kill(BaseModel):
     assister_steamid: str | None = None
     assister_name: str | None = None
     flash_assist: bool = False
+    
+    @field_validator('assister_name', 'assister_steamid', mode='before')
+    @classmethod
+    def transform_nan_to_none(cls, v):
+        # Check if the value is a float NaN and convert to None
+        if isinstance(v, float) and math.isnan(v):
+            return None
+        return v
 
     # Computed
     is_trade: bool = False  # Set by analysis

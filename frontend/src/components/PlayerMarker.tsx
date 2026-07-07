@@ -4,21 +4,25 @@ import type { Player } from "../types/Player";
 interface PlayerMarkerProps {
     player: Player;
     scale: number;
+    x: number;
+    y: number;
     offsetX: number;
     offsetY: number;
 }
 
-export default function PlayerMarker({ player, scale, offsetX, offsetY }: PlayerMarkerProps) {
-    const color = player.team === "CT" ? "#4da6ff" : "#ffb347";
+export default function PlayerMarker({ player, scale, x, y }: PlayerMarkerProps) {
+    const color = player.team_name === "CT" ? "#4da6ff" : "#ffb347";
 
-    if (!player.alive) return null;
+    if (!player.is_alive) return null;
 
     return (
         <Circle
-          x={player.x * scale + offsetX}
-          y={player.y * scale + offsetY}
-          radius={5}
+          x={x}
+          y={y}
+          radius={5 * scale}
           fill={color}
+          stroke="white"
+          strokeWidth={1}
         />
     );
 }
