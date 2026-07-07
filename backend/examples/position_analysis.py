@@ -31,6 +31,10 @@ async def get_tick_state(tick: int):
     tick_data = df[df['tick'] == tick]
     return tick_data.to_dict(orient="records")
 
+@app.get("api/map")
+async def get_map():
+    
+
 def load_and_start(demo_path: str):
     global df
     print(f"Parsing demo: {demo_path}")
