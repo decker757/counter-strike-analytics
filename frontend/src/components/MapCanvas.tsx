@@ -20,6 +20,9 @@ const MAP_CONFIG = {
   }
 }
 
+type MapResponse = {
+    map_name: keyof typeof mapImages;
+};
 
 const DUST2_CONFIG = {
   minX: -2203,
@@ -35,6 +38,11 @@ const INFERNO_CONFIG = {
   maxY: 3514,
 }
 
+const mapImages = {
+  inferno,
+  dust2,
+};
+
 interface MapCanvasProps {
   currentTick: number;
 }
@@ -49,11 +57,24 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
 
   //Map loading hook
   useEffect(() => {
-    const img = new window.Image();
+    async function loadMap() {
+        const response = await fetch("/api/map");
+        const data: MapResponse = await response.json();
+
+        const img = new window.Image();
+        img.src = mapImages[data.map_name];
+
+        img.onload = () => {
+            setMapImage(img);
+        };
+    }
+    loadMap();
+  }, []);
+    /*const img = new window.Image();
     //img.src = dust2;
     img.src = inferno;
     img.onload = () => setMapImage(img);
-  }, []);
+  }, []);*/
 
   //window resize hook
   useEffect(() => {

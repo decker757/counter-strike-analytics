@@ -10,6 +10,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from demoparser2 import DemoParser
 
+map_name = ""
+
 app = FastAPI()
 
 app.add_middleware(
@@ -31,9 +33,12 @@ async def get_tick_state(tick: int):
     tick_data = df[df['tick'] == tick]
     return tick_data.to_dict(orient="records")
 
+
 @app.get("api/map")
 async def get_map():
-    
+    return {
+        "map_name": map_name
+    }
 
 def load_and_start(demo_path: str):
     global df
@@ -49,6 +54,8 @@ def load_and_start(demo_path: str):
     print("Extracting ticks... this may take a moment.")
     df = pd.DataFrame(parser.parse_ticks(PLAYER_FIELDS))
     print(f"Ready! Loaded {len(df)} rows.")
+    
+    map_name = parser.map_name
     
     # Start the server
     uvicorn.run(app, host="0.0.0.0", port=8000)
