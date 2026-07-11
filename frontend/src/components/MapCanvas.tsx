@@ -1,11 +1,19 @@
 import { Stage, Layer, Image } from "react-konva";
 import { useEffect, useState } from "react";
 import PlayerMarker from "./PlayerMarker";
-import type { Player } from "../types/Player";
+import HeatmapLayer from "./HeatmapLayer";
+import type { Player, PlayerInfo, HeatmapData, RoundsData, RoundInfo } from "../types/Player";
 import dust2 from "../assets/maps/dust2.png";
 import inferno from "../assets/maps/inferno.png";
 
-const MAP_CONFIG = {
+interface MapBounds {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+
+const MAP_CONFIG: Record<string, MapBounds> = {
   dust2: {
     minX: -2203,
     maxX: 1768,
@@ -18,25 +26,11 @@ const MAP_CONFIG = {
     minY: -769,
     maxY: 3514,
   }
-}
+};
 
 type MapResponse = {
     map_name: keyof typeof mapImages;
 };
-
-const DUST2_CONFIG = {
-  minX: -2203,
-  maxX: 1768,
-  minY: -1163,
-  maxY: 3117,
-} 
-
-const INFERNO_CONFIG = {
-  minX: -1730,
-  maxX: 2664,
-  minY: -769,
-  maxY: 3514,
-}
 
 const mapImages = {
   inferno,
@@ -54,15 +48,34 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
     width: window.innerWidth,
     height: window.innerHeight
   });
+  const [activeMapBounds, setActiveMapBounds] = useState<MapBounds>(MAP_CONFIG.inferno);
+
+  // Heatmap state
+  const [playerList, setPlayerList] = useState<PlayerInfo[]>([]);
+  const [selectedPlayer, setSelectedPlayer] = useState<string>("");
+  const [selectedTeam, setSelectedTeam] = useState<string>("");
+  const [showHeatmap, setShowHeatmap] = useState<boolean>(false);
+  const [heatmapPositions, setHeatmapPositions] = useState<Array<{ X: number; Y: number }>>([]);
+  const [rounds, setRounds] = useState<RoundInfo[]>([]);
+  const [selectedRound, setSelectedRound] = useState<number>(0); // 0 = all rounds
 
   //Map loading hook
   useEffect(() => {
     async function loadMap() {
-        const response = await fetch("/api/map");
+        const response = await fetch("http://localhost:8000/api/map");
         const data: MapResponse = await response.json();
 
+        // Strip "de_" prefix from map name (e.g. "de_inferno" → "inferno")
+        const mapKey = data.map_name.replace(/^de_/, "") as keyof typeof mapImages;
+
+        // Set active map bounds based on loaded map
+        const bounds = MAP_CONFIG[mapKey];
+        if (bounds) {
+          setActiveMapBounds(bounds);
+        }
+
         const img = new window.Image();
-        img.src = mapImages[data.map_name];
+        img.src = mapImages[mapKey];
 
         img.onload = () => {
             setMapImage(img);
@@ -70,11 +83,58 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
     }
     loadMap();
   }, []);
-    /*const img = new window.Image();
-    //img.src = dust2;
-    img.src = inferno;
-    img.onload = () => setMapImage(img);
-  }, []);*/
+
+  // Fetch player list for heatmap filter
+  useEffect(() => {
+    async function fetchPlayers() {
+      try {
+        const response = await fetch("http://localhost:8000/api/players");
+        const data: PlayerInfo[] = await response.json();
+        setPlayerList(data);
+      } catch (error) {
+        console.error("Error fetching player list:", error);
+      }
+    }
+    fetchPlayers();
+  }, []);
+
+  // Fetch available rounds
+  useEffect(() => {
+    async function fetchRounds() {
+      try {
+        const response = await fetch("http://localhost:8000/api/rounds");
+        const data: RoundsData = await response.json();
+        setRounds(data.rounds || []);
+      } catch (error) {
+        console.error("Error fetching rounds:", error);
+      }
+    }
+    fetchRounds();
+  }, []);
+
+  // Fetch heatmap data when filters change
+  useEffect(() => {
+    async function fetchHeatmap() {
+      try {
+        const sampleRate = selectedRound > 0 ? 8 : (selectedPlayer ? 64 : 128);
+        const params = new URLSearchParams();
+        if (selectedPlayer) params.set("steamid", selectedPlayer);
+        if (selectedTeam) params.set("team", selectedTeam);
+        params.set("round_num", String(selectedRound));
+        params.set("sample_rate", String(sampleRate));
+
+        const url = `http://localhost:8000/api/heatmap?${params.toString()}`;
+        console.log("Fetching heatmap:", url);
+        const response = await fetch(url);
+        const data: HeatmapData = await response.json();
+        console.log("Heatmap data received:", data.steamid, "team:", data.team, "round:", data.round_num, "positions:", data.positions?.length);
+        setHeatmapPositions(data.positions || []);
+      } catch (error) {
+        console.error("Error fetching heatmap data:", error);
+      }
+    }
+    fetchHeatmap();
+  }, [selectedPlayer, selectedTeam, selectedRound]);
 
   //window resize hook
   useEffect(() => {
@@ -99,7 +159,6 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
         const response = await fetch(`http://localhost:8000/api/state/${currentTick}`);
         if (!response.ok) throw new Error("Network response was not ok");
         const data = await response.json();
-        //console.log(data);
         setPlayers(data);
       } catch (error) {
         console.error("Error fetching player positions:", error);
@@ -107,13 +166,13 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
     };
 
     fetchTickData();
-  }, [currentTick]); //Re-runs whenever tick updates
+  }, [currentTick]);
 
   // Calculate scale to fit map within viewport while maintaining aspect ratio
   const getScaleFactor = () => {
     if (!mapImage) return { scale: 1, width: 0, height: 0 };
 
-    const padding = 0; // Add padding around the map
+    const padding = 0;
     const availableWidth = dimensions.width - padding;
     const availableHeight = dimensions.height - padding;
 
@@ -131,35 +190,14 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
   const { scale, width, height } = getScaleFactor();
 
   const getCanvasCoords = (gameX: number, gameY: number) => {
-
     if (gameX === undefined || gameY === undefined) return { x: 0, y: 0 };
 
-    /*
-    // 1. Calculate the percentage of where the player is within the boundaries
-    const percentX = (gameX - DUST2_CONFIG.minX) / (DUST2_CONFIG.maxX - DUST2_CONFIG.minX);
-    const percentY = (DUST2_CONFIG.maxY - gameY) / (DUST2_CONFIG.maxY - DUST2_CONFIG.minY);
+    const bounds = activeMapBounds;
+    const xcoorperpixel = (bounds.maxX - bounds.minX) / width;
+    const ycoorperpixel = (bounds.maxY - bounds.minY) / height;
 
-    // 2. Map percentage to your 1080px image space
-    const imageX = percentX * 1000;
-    const imageY = percentY * 1000;
-
-    // 3. Apply the responsive canvas scaling and centering
-    // 'width', 'height', and 'dimensions' come from your existing state
-    const canvasX = (imageX * (width / 1000)) + ((dimensions.width - width) / 2);
-    const canvasY = (imageY * (height / 1000)) + ((dimensions.height - height) / 2);
-    */
-
-    //const xcoorperpixel = (DUST2_CONFIG.maxX - DUST2_CONFIG.minX) / width;
-    //const ycoorperpixel = (DUST2_CONFIG.maxY - DUST2_CONFIG.minY) / height;
-
-    const xcoorperpixel = (INFERNO_CONFIG.maxX - INFERNO_CONFIG.minX) / width;
-    const ycoorperpixel = (INFERNO_CONFIG.maxY - INFERNO_CONFIG.minY) / height;
-
-    //const gameXnorm = gameX - DUST2_CONFIG.minX;
-    //const gameYnorm = DUST2_CONFIG.maxY - gameY;
-
-    const gameXnorm = gameX - INFERNO_CONFIG.minX;
-    const gameYnorm = INFERNO_CONFIG.maxY - gameY;
+    const gameXnorm = gameX - bounds.minX;
+    const gameYnorm = bounds.maxY - gameY;
 
     const offsetX = (dimensions.width - width) / 2;
 
@@ -167,54 +205,129 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
     const canvasY = (gameYnorm / ycoorperpixel);
 
     return { x: canvasX, y: canvasY };
-};
+  };
+
+  const mapOffsetX = (dimensions.width - width) / 2;
+  const mapOffsetY = (dimensions.height - height) / 2;
 
   return (
-    <Stage width={dimensions.width} height={dimensions.height}>
-      <Layer>
-        {mapImage && (
-          <Image
-            image={mapImage}
-            width={width}
-            height={height}
-            x={(dimensions.width - width) / 2}
-            y={(dimensions.height - height) / 2}
+    <div style={{ position: "relative" }}>
+      {/* Heatmap controls overlay */}
+      <div style={{
+        position: "absolute",
+        top: 10,
+        left: 10,
+        zIndex: 10,
+        background: "rgba(0, 0, 0, 0.75)",
+        padding: "10px 14px",
+        borderRadius: 8,
+        display: "flex",
+        gap: 12,
+        alignItems: "center",
+        color: "#fff",
+        fontSize: 13,
+        fontFamily: "sans-serif",
+      }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={showHeatmap}
+            onChange={(e) => setShowHeatmap(e.target.checked)}
           />
+          Heatmap
+        </label>
+
+        {showHeatmap && (
+          <>
+            <select
+              value={selectedTeam}
+              onChange={(e) => setSelectedTeam(e.target.value)}
+              style={{ padding: "3px 6px", fontSize: 13, borderRadius: 4 }}
+            >
+              <option value="">All Teams</option>
+              <option value="CT">CT</option>
+              <option value="TERRORIST">T</option>
+            </select>
+            <select
+              value={selectedPlayer}
+              onChange={(e) => setSelectedPlayer(e.target.value)}
+              style={{ padding: "3px 6px", fontSize: 13, borderRadius: 4 }}
+            >
+              <option value="">All Players</option>
+              {playerList
+                .filter((p) => !selectedTeam || p.team_name === selectedTeam)
+                .map((p) => (
+                  <option key={p.steamid} value={p.steamid}>
+                    {p.name} ({p.team_name})
+                  </option>
+                ))}
+            </select>
+            <select
+              value={selectedRound}
+              onChange={(e) => setSelectedRound(Number(e.target.value))}
+              style={{ padding: "3px 6px", fontSize: 13, borderRadius: 4 }}
+            >
+              <option value="0">All Rounds</option>
+              {rounds.map((r) => (
+                <option key={r.round_num} value={r.round_num}>
+                  Round {r.round_num}
+                </option>
+              ))}
+            </select>
+          </>
         )}
+      </div>
 
-        {players.map(player => {
-          console.log(player.X)
-          console.log(player.Y)
-          if (player.X === undefined || player.Y === undefined) return null;
-
-          const coords = getCanvasCoords(player.X, player.Y);
-          console.log(coords)
-
-          return (
-            <PlayerMarker
-              key={player.steamid}
-              player={player}
-              x={coords.x}   // Use the calculated X
-              y={coords.y}   // Use the calculated Y
-              scale={scale}
-              offsetX={0}
-              offsetY={0}
+      <Stage width={dimensions.width} height={dimensions.height}>
+        {/* Layer 1: Map image */}
+        <Layer>
+          {mapImage && (
+            <Image
+              image={mapImage}
+              width={width}
+              height={height}
+              x={mapOffsetX}
+              y={mapOffsetY}
             />
-          );
-        })}
-      </Layer>
-    </Stage>
+          )}
+        </Layer>
+
+        {/* Layer 2: Heatmap (between map and markers) */}
+        <Layer>
+          {showHeatmap && heatmapPositions.length > 0 && (
+            <HeatmapLayer
+              positions={heatmapPositions}
+              mapBounds={activeMapBounds}
+              imageWidth={width}
+              imageHeight={height}
+              visible={showHeatmap}
+              offsetX={mapOffsetX}
+              offsetY={mapOffsetY}
+            />
+          )}
+        </Layer>
+
+        {/* Layer 3: Player markers (on top) */}
+        <Layer>
+          {players.map(player => {
+            if (player.X === undefined || player.Y === undefined) return null;
+
+            const coords = getCanvasCoords(player.X, player.Y);
+
+            return (
+              <PlayerMarker
+                key={player.steamid}
+                player={player}
+                x={coords.x}
+                y={coords.y}
+                scale={scale}
+                offsetX={0}
+                offsetY={0}
+              />
+            );
+          })}
+        </Layer>
+      </Stage>
+    </div>
   );
 }
-
-
-
-/*
-<PlayerMarker
-            key={player.steamid}
-            player={player}
-            scale={scale}
-            offsetX={(dimensions.width - width) / 2}
-            offsetY={(dimensions.height - height) / 2}
-          />
-*/
