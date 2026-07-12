@@ -2,6 +2,8 @@ import { Stage, Layer, Image } from "react-konva";
 import { useEffect, useState } from "react";
 import PlayerMarker from "./PlayerMarker";
 import HeatmapLayer from "./HeatmapLayer";
+import IntentLayer from "./IntentLayer";
+import ChatPanel from "./ChatPanel";
 import type { Player, PlayerInfo, HeatmapData, RoundsData, RoundInfo } from "../types/Player";
 import dust2 from "../assets/maps/dust2.png";
 import inferno from "../assets/maps/inferno.png";
@@ -55,6 +57,8 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<string>("");
   const [selectedTeam, setSelectedTeam] = useState<string>("");
   const [showHeatmap, setShowHeatmap] = useState<boolean>(false);
+  const [showIntent, setShowIntent] = useState<boolean>(false);
+  const [showChat, setShowChat] = useState<boolean>(false);
   const [heatmapPositions, setHeatmapPositions] = useState<Array<{ X: number; Y: number }>>([]);
   const [rounds, setRounds] = useState<RoundInfo[]>([]);
   const [selectedRound, setSelectedRound] = useState<number>(0); // 0 = all rounds
@@ -212,7 +216,7 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
 
   return (
     <div style={{ position: "relative" }}>
-      {/* Heatmap controls overlay */}
+      {/* Controls overlay */}
       <div style={{
         position: "absolute",
         top: 10,
@@ -237,7 +241,16 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
           Heatmap
         </label>
 
-        {showHeatmap && (
+        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={showIntent}
+            onChange={(e) => setShowIntent(e.target.checked)}
+          />
+          Show Intent
+        </label>
+
+        {(showHeatmap || showIntent) && (
           <>
             <select
               value={selectedTeam}
@@ -276,6 +289,22 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
             </select>
           </>
         )}
+
+        <button
+          onClick={() => setShowChat(!showChat)}
+          style={{
+            padding: "4px 10px",
+            background: showChat ? "#4CAF50" : "rgba(255,255,255,0.15)",
+            border: "none",
+            borderRadius: 4,
+            color: "#fff",
+            cursor: "pointer",
+            fontSize: 12,
+            whiteSpace: "nowrap",
+          }}
+        >
+          🤖 Coach Chat
+        </button>
       </div>
 
       <Stage width={dimensions.width} height={dimensions.height}>
@@ -307,6 +336,23 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
           )}
         </Layer>
 
+        {/* Layer 2.5: Intent predictions (between heatmap and markers) */}
+        <Layer>
+          {showIntent && (
+            <IntentLayer
+              tick={currentTick}
+              mapBounds={activeMapBounds}
+              imageWidth={width}
+              imageHeight={height}
+              offsetX={mapOffsetX}
+              offsetY={mapOffsetY}
+              visible={showIntent}
+              selectedTeam={selectedTeam}
+              selectedPlayer={selectedPlayer}
+            />
+          )}
+        </Layer>
+
         {/* Layer 3: Player markers (on top) */}
         <Layer>
           {players.map(player => {
@@ -328,6 +374,13 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
           })}
         </Layer>
       </Stage>
+
+      {/* Chat Panel overlay */}
+      <ChatPanel
+        currentTick={currentTick}
+        visible={showChat}
+        onClose={() => setShowChat(false)}
+      />
     </div>
   );
 }

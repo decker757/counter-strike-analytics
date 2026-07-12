@@ -1,0 +1,141 @@
+{
+  "map": "de_inferno",
+  "zones": [
+    {
+      "id": "t_spawn",
+      "name": "T Spawn",
+      "is_ct_spawn": false,
+      "is_t_spawn": true,
+      "is_bombsite": false,
+      "adjacent": ["mid", "second_mid", "apartments"]
+    },
+    {
+      "id": "mid",
+      "name": "Mid",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["t_spawn", "second_mid", "top_mid", "banana"]
+    },
+    {
+      "id": "second_mid",
+      "name": "Second Mid",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["t_spawn", "mid", "top_mid", "apartments"]
+    },
+    {
+      "id": "top_mid",
+      "name": "Top Mid",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["mid", "second_mid", "short_a", "arch"]
+    },
+    {
+      "id": "apartments",
+      "name": "Apartments",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["t_spawn", "second_mid", "long_a", "short_a", "a_site"]
+    },
+    {
+      "id": "long_a",
+      "name": "Long A",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["apartments", "short_a", "a_site", "pit"]
+    },
+    {
+      "id": "short_a",
+      "name": "Short A",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["top_mid", "apartments", "long_a", "a_site", "arch"]
+    },
+    {
+      "id": "a_site",
+      "name": "A Site",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": true,
+      "adjacent": ["long_a", "short_a", "pit", "library", "arch"]
+    },
+    {
+      "id": "pit",
+      "name": "Pit",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["long_a", "a_site"]
+    },
+    {
+      "id": "library",
+      "name": "Library",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["a_site", "arch", "ct_spawn"]
+    },
+    {
+      "id": "arch",
+      "name": "Arch",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["top_mid", "short_a", "a_site", "library", "ct_spawn"]
+    },
+    {
+      "id": "banana",
+      "name": "Banana",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["mid", "car", "b_site"]
+    },
+    {
+      "id": "car",
+      "name": "Car",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["banana", "construction", "b_site", "ct_apps"]
+    },
+    {
+      "id": "construction",
+      "name": "Construction",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["car", "b_site"]
+    },
+    {
+      "id": "b_site",
+      "name": "B Site",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": true,
+      "adjacent": ["banana", "car", "construction", "ct_apps"]
+    },
+    {
+      "id": "ct_spawn",
+      "name": "CT Spawn",
+      "is_ct_spawn": true,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["library", "arch", "ct_apps"]
+    },
+    {
+      "id": "ct_apps",
+      "name": "CT Apps",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["car", "b_site", "ct_spawn"]
+    }
+  ]
+}

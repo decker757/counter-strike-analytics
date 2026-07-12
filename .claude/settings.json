@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "WebFetch(domain:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf ~)"
+    ],
+    "defaultMode": "bypassPermissions"
+  }
+}
