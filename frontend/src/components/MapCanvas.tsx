@@ -216,7 +216,7 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
 
   return (
     <div style={{ position: "relative" }}>
-      {/* Heatmap controls overlay */}
+      {/* Controls overlay */}
       <div style={{
         position: "absolute",
         top: 10,
@@ -250,51 +250,7 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
           Show Intent
         </label>
 
-        {showIntent && (
-          <>
-            <select
-              value={selectedTeam}
-              onChange={(e) => setSelectedTeam(e.target.value)}
-              style={{ padding: "3px 6px", fontSize: 13, borderRadius: 4 }}
-            >
-              <option value="">All Teams</option>
-              <option value="CT">CT</option>
-              <option value="TERRORIST">T</option>
-            </select>
-            <select
-              value={selectedPlayer}
-              onChange={(e) => setSelectedPlayer(e.target.value)}
-              style={{ padding: "3px 6px", fontSize: 13, borderRadius: 4 }}
-            >
-              <option value="">All Players</option>
-              {playerList
-                .filter((p) => !selectedTeam || p.team_name === selectedTeam)
-                .map((p) => (
-                  <option key={p.steamid} value={p.steamid}>
-                    {p.name} ({p.team_name})
-                  </option>
-                ))}
-            </select>
-          </>
-        )}
-
-        <button
-          onClick={() => setShowChat(!showChat)}
-          style={{
-            padding: "4px 10px",
-            background: showChat ? "#4CAF50" : "rgba(255,255,255,0.15)",
-            border: "none",
-            borderRadius: 4,
-            color: "#fff",
-            cursor: "pointer",
-            fontSize: 12,
-            whiteSpace: "nowrap",
-          }}
-        >
-          🤖 Coach Chat
-        </button>
-
-        {showHeatmap && (
+        {(showHeatmap || showIntent) && (
           <>
             <select
               value={selectedTeam}
@@ -333,6 +289,22 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
             </select>
           </>
         )}
+
+        <button
+          onClick={() => setShowChat(!showChat)}
+          style={{
+            padding: "4px 10px",
+            background: showChat ? "#4CAF50" : "rgba(255,255,255,0.15)",
+            border: "none",
+            borderRadius: 4,
+            color: "#fff",
+            cursor: "pointer",
+            fontSize: 12,
+            whiteSpace: "nowrap",
+          }}
+        >
+          🤖 Coach Chat
+        </button>
       </div>
 
       <Stage width={dimensions.width} height={dimensions.height}>
