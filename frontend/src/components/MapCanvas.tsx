@@ -2,6 +2,8 @@ import { Stage, Layer, Image } from "react-konva";
 import { useEffect, useState } from "react";
 import PlayerMarker from "./PlayerMarker";
 import HeatmapLayer from "./HeatmapLayer";
+import IntentLayer from "./IntentLayer";
+import ChatPanel from "./ChatPanel";
 import type { Player, PlayerInfo, HeatmapData, RoundsData, RoundInfo } from "../types/Player";
 import dust2 from "../assets/maps/dust2.png";
 import inferno from "../assets/maps/inferno.png";
@@ -55,6 +57,8 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<string>("");
   const [selectedTeam, setSelectedTeam] = useState<string>("");
   const [showHeatmap, setShowHeatmap] = useState<boolean>(false);
+  const [showIntent, setShowIntent] = useState<boolean>(false);
+  const [showChat, setShowChat] = useState<boolean>(false);
   const [heatmapPositions, setHeatmapPositions] = useState<Array<{ X: number; Y: number }>>([]);
   const [rounds, setRounds] = useState<RoundInfo[]>([]);
   const [selectedRound, setSelectedRound] = useState<number>(0); // 0 = all rounds
@@ -237,6 +241,59 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
           Heatmap
         </label>
 
+        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={showIntent}
+            onChange={(e) => setShowIntent(e.target.checked)}
+          />
+          Show Intent
+        </label>
+
+        {showIntent && (
+          <>
+            <select
+              value={selectedTeam}
+              onChange={(e) => setSelectedTeam(e.target.value)}
+              style={{ padding: "3px 6px", fontSize: 13, borderRadius: 4 }}
+            >
+              <option value="">All Teams</option>
+              <option value="CT">CT</option>
+              <option value="TERRORIST">T</option>
+            </select>
+            <select
+              value={selectedPlayer}
+              onChange={(e) => setSelectedPlayer(e.target.value)}
+              style={{ padding: "3px 6px", fontSize: 13, borderRadius: 4 }}
+            >
+              <option value="">All Players</option>
+              {playerList
+                .filter((p) => !selectedTeam || p.team_name === selectedTeam)
+                .map((p) => (
+                  <option key={p.steamid} value={p.steamid}>
+                    {p.name} ({p.team_name})
+                  </option>
+                ))}
+            </select>
+          </>
+        )}
+
+        <button
+          onClick={() => setShowChat(!showChat)}
+          style={{
+            padding: "4px 10px",
+            background: showChat ? "#4CAF50" : "rgba(255,255,255,0.15)",
+            border: "none",
+            borderRadius: 4,
+            color: "#fff",
+            cursor: "pointer",
+            fontSize: 12,
+            whiteSpace: "nowrap",
+          }}
+        >
+          🤖 Coach Chat
+        </button>
+
         {showHeatmap && (
           <>
             <select
@@ -307,6 +364,23 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
           )}
         </Layer>
 
+        {/* Layer 2.5: Intent predictions (between heatmap and markers) */}
+        <Layer>
+          {showIntent && (
+            <IntentLayer
+              tick={currentTick}
+              mapBounds={activeMapBounds}
+              imageWidth={width}
+              imageHeight={height}
+              offsetX={mapOffsetX}
+              offsetY={mapOffsetY}
+              visible={showIntent}
+              selectedTeam={selectedTeam}
+              selectedPlayer={selectedPlayer}
+            />
+          )}
+        </Layer>
+
         {/* Layer 3: Player markers (on top) */}
         <Layer>
           {players.map(player => {
@@ -328,6 +402,13 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
           })}
         </Layer>
       </Stage>
+
+      {/* Chat Panel overlay */}
+      <ChatPanel
+        currentTick={currentTick}
+        visible={showChat}
+        onClose={() => setShowChat(false)}
+      />
     </div>
   );
 }
