@@ -1,0 +1,109 @@
+{
+  "map": "de_dust2",
+  "zones": [
+    {
+      "id": "t_spawn",
+      "name": "T Spawn",
+      "is_ct_spawn": false,
+      "is_t_spawn": true,
+      "is_bombsite": false,
+      "adjacent": ["t_ramp", "long_doors"]
+    },
+    {
+      "id": "t_ramp",
+      "name": "T Ramp",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["t_spawn", "mid_doors", "upper_tunnels"]
+    },
+    {
+      "id": "mid_doors",
+      "name": "Mid Doors",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["t_ramp", "mid", "upper_tunnels"]
+    },
+    {
+      "id": "mid",
+      "name": "Mid",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["mid_doors", "catwalk", "ct_mid", "ct_spawn"]
+    },
+    {
+      "id": "long_doors",
+      "name": "Long Doors",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["t_spawn", "long_a"]
+    },
+    {
+      "id": "long_a",
+      "name": "Long A",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["long_doors", "a_site"]
+    },
+    {
+      "id": "a_site",
+      "name": "A Site",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": true,
+      "adjacent": ["long_a", "catwalk", "ct_mid", "ct_spawn"]
+    },
+    {
+      "id": "catwalk",
+      "name": "Catwalk (Short)",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["mid", "a_site"]
+    },
+    {
+      "id": "upper_tunnels",
+      "name": "Upper Tunnels",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["t_ramp", "mid_doors", "lower_tunnels"]
+    },
+    {
+      "id": "lower_tunnels",
+      "name": "Lower Tunnels",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["upper_tunnels", "b_site"]
+    },
+    {
+      "id": "b_site",
+      "name": "B Site",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": true,
+      "adjacent": ["lower_tunnels", "ct_spawn", "ct_mid"]
+    },
+    {
+      "id": "ct_spawn",
+      "name": "CT Spawn",
+      "is_ct_spawn": true,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["mid", "ct_mid", "a_site", "b_site"]
+    },
+    {
+      "id": "ct_mid",
+      "name": "CT Mid",
+      "is_ct_spawn": false,
+      "is_t_spawn": false,
+      "is_bombsite": false,
+      "adjacent": ["mid", "a_site", "b_site", "ct_spawn"]
+    }
+  ]
+}
