@@ -23,7 +23,6 @@ export default function ChatPanel({ currentTick, visible, onClose }: ChatPanelPr
   const [llmAvailable, setLlmAvailable] = useState<boolean | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Check LLM availability on mount
   useEffect(() => {
     async function checkStatus() {
       try {
@@ -37,7 +36,6 @@ export default function ChatPanel({ currentTick, visible, onClose }: ChatPanelPr
     if (visible) checkStatus();
   }, [visible]);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -133,70 +131,51 @@ export default function ChatPanel({ currentTick, visible, onClose }: ChatPanelPr
   if (!visible) return null;
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: 10,
-        right: 10,
-        width: 360,
-        maxHeight: "70vh",
-        background: "rgba(20, 20, 30, 0.95)",
-        borderRadius: 10,
-        display: "flex",
-        flexDirection: "column",
-        zIndex: 20,
-        color: "#e0e0e0",
-        fontFamily: "sans-serif",
-        fontSize: 13,
-        boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-      }}
-    >
+    <div className="overlay-panel animate-in" style={{ maxHeight: "70vh", display: "flex", flexDirection: "column" }}>
       {/* Header */}
-      <div
-        style={{
-          padding: "10px 14px",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          fontWeight: 600,
-        }}
-      >
+      <div style={{
+        padding: "12px 16px",
+        borderBottom: "1px solid var(--border-subtle)",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        fontWeight: 600,
+        fontSize: 13,
+        color: "var(--text-primary)",
+      }}>
         <span>
           🤖 AI Coach
           {llmAvailable === false && (
-            <span style={{ fontSize: 11, color: "#ff9800", marginLeft: 8 }}>
-              (offline)
+            <span style={{ fontSize: 11, color: "var(--warning)", marginLeft: 8, fontWeight: 400 }}>
+              offline
+            </span>
+          )}
+          {llmAvailable === true && (
+            <span style={{ fontSize: 10, color: "var(--success)", marginLeft: 6, fontWeight: 400 }}>
+              ● online
             </span>
           )}
         </span>
         <button
           onClick={onClose}
-          style={{
-            background: "none",
-            border: "none",
-            color: "#aaa",
-            cursor: "pointer",
-            fontSize: 16,
-          }}
+          className="btn btn-icon"
+          style={{ padding: "2px 8px", fontSize: 14 }}
         >
           ✕
         </button>
       </div>
 
       {/* Messages */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "10px 14px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          minHeight: 200,
-          maxHeight: 400,
-        }}
-      >
+      <div style={{
+        flex: 1,
+        overflowY: "auto",
+        padding: "10px 14px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        minHeight: 200,
+        maxHeight: 380,
+      }}>
         {messages.map((msg, i) => (
           <div
             key={i}
@@ -207,11 +186,14 @@ export default function ChatPanel({ currentTick, visible, onClose }: ChatPanelPr
               borderRadius: 8,
               background:
                 msg.role === "user"
-                  ? "#2196F3"
+                  ? "var(--accent)"
                   : msg.role === "system"
-                  ? "rgba(255,255,255,0.05)"
-                  : "rgba(255,255,255,0.1)",
-              color: msg.role === "user" ? "#fff" : "#ddd",
+                  ? "rgba(255,255,255,0.04)"
+                  : "rgba(255,255,255,0.06)",
+              border: msg.role === "user"
+                ? "1px solid rgba(77, 166, 255, 0.4)"
+                : "1px solid var(--border-subtle)",
+              color: msg.role === "user" ? "#fff" : "var(--text-primary)",
               fontSize: 12,
               lineHeight: 1.5,
               whiteSpace: "pre-wrap",
@@ -222,70 +204,57 @@ export default function ChatPanel({ currentTick, visible, onClose }: ChatPanelPr
           </div>
         ))}
         {loading && (
-          <div style={{ color: "#888", fontSize: 12, fontStyle: "italic" }}>
-            Thinking...
+          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0" }}>
+            <span className="loading-dot" />
+            <span className="loading-dot" />
+            <span className="loading-dot" />
+            <span style={{ color: "var(--text-secondary)", fontSize: 11, fontStyle: "italic", marginLeft: 4 }}>
+              Thinking…
+            </span>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <div
-        style={{
-          padding: "8px 14px",
-          borderTop: "1px solid rgba(255,255,255,0.1)",
-          display: "flex",
-          gap: 8,
-        }}
-      >
+      <div style={{
+        padding: "8px 14px 12px",
+        borderTop: "1px solid var(--border-subtle)",
+        display: "flex",
+        gap: 8,
+      }}>
         <button
           onClick={explainCurrentMoment}
           disabled={loading}
-          style={{
-            padding: "6px 10px",
-            background: "#4CAF50",
-            border: "none",
-            borderRadius: 4,
-            color: "#fff",
-            cursor: "pointer",
-            fontSize: 11,
-            whiteSpace: "nowrap",
-            opacity: loading ? 0.5 : 1,
-          }}
+          className="btn btn-success"
+          style={{ fontSize: 11, whiteSpace: "nowrap" }}
         >
-          Explain Now
+          ⚡ Explain Now
         </button>
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask about the match..."
+          placeholder="Ask about the match…"
           disabled={loading}
           style={{
             flex: 1,
             padding: "6px 10px",
-            background: "rgba(255,255,255,0.1)",
-            border: "1px solid rgba(255,255,255,0.2)",
-            borderRadius: 4,
-            color: "#fff",
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: "var(--radius-sm)",
+            color: "var(--text-primary)",
             fontSize: 12,
             outline: "none",
+            fontFamily: "inherit",
           }}
         />
         <button
           onClick={() => sendMessage(input)}
           disabled={loading || !input.trim()}
-          style={{
-            padding: "6px 12px",
-            background: "#2196F3",
-            border: "none",
-            borderRadius: 4,
-            color: "#fff",
-            cursor: "pointer",
-            fontSize: 12,
-            opacity: loading || !input.trim() ? 0.5 : 1,
-          }}
+          className="btn btn-primary"
+          style={{ fontSize: 12, padding: "6px 14px" }}
         >
           Send
         </button>

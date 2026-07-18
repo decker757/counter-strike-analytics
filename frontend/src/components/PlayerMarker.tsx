@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Circle, Text, Group, Rect } from "react-konva";
 import type { Player } from "../types/Player";
 
@@ -11,7 +11,7 @@ interface PlayerMarkerProps {
     offsetY: number;
 }
 
-export default function PlayerMarker({ player, scale, x, y }: PlayerMarkerProps) {
+const PlayerMarker = memo(function PlayerMarker({ player, scale, x, y }: PlayerMarkerProps) {
     const [hovered, setHovered] = useState(false);
     const color = player.team_name === "CT" ? "#4da6ff" : "#ffb347";
 
@@ -54,4 +54,6 @@ export default function PlayerMarker({ player, scale, x, y }: PlayerMarkerProps)
             )}
         </Group>
     );
-}
+});
+
+export default PlayerMarker;

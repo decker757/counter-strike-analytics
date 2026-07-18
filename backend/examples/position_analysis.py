@@ -37,9 +37,44 @@ async def get_tick_state(tick: int):
     if df.empty:
         return {"error": "No data loaded"}
 
-    # Filter for just the players at this specific tick
-    tick_data = df[df['tick'] == tick]
+    # O(1) index lookup instead of O(N) df[df['tick'] == tick]
+    try:
+        tick_data = df.loc[tick]
+    except KeyError:
+        return []
+    if isinstance(tick_data, pd.Series):
+        tick_data = tick_data.to_frame().T
     return tick_data.to_dict(orient="records")
+
+
+@app.get("/api/state-range")
+async def get_state_range(start: int, end: int):
+    """Return all player states for ticks in [start, end] as a dict keyed by tick.
+
+    Much more efficient than N individual /api/state/{tick} calls.
+    The frontend tick buffer uses this for prefetching ~256 ticks at once.
+    """
+    global df
+    if df.empty:
+        return {"error": "No data loaded", "states": {}}
+
+    try:
+        tick_data = df.loc[start:end]
+    except KeyError:
+        return {"states": {}, "start": start, "end": end}
+
+    if isinstance(tick_data, pd.Series):
+        tick_data = tick_data.to_frame().T
+
+    if tick_data.empty:
+        return {"states": {}, "start": start, "end": end}
+
+    # Group by tick (index) and serialize each tick's players
+    result = {}
+    for tick_val, group in tick_data.groupby(level=0):
+        result[int(tick_val)] = group.to_dict(orient="records")
+
+    return {"states": result, "start": start, "end": end}
 
 
 @app.get("/api/map")
@@ -125,12 +160,10 @@ async def get_heatmap(steamid: str = "", team: str = "", sample_rate: int = 64, 
 
     # Filter by round if specified, otherwise exclude warmup (round 0)
     if round_num > 0:
-        mask = np.array([_get_round_for_tick(t) == round_num for t in player_data['tick']])
-        player_data = player_data[mask]
+        player_data = player_data[player_data['round_num'] == round_num]
     else:
         # Default: exclude warmup (round 0), include all real rounds (1+)
-        mask = np.array([_get_round_for_tick(t) > 0 for t in player_data['tick']])
-        player_data = player_data[mask]
+        player_data = player_data[player_data['round_num'] > 0]
 
     if player_data.empty:
         return {"positions": [], "steamid": steamid, "team": team, "round_num": round_num}
@@ -160,6 +193,8 @@ def load_and_start(demo_path: str):
     print("Extracting ticks... this may take a moment.")
     df = pd.DataFrame(parser.parse_ticks(PLAYER_FIELDS))
     print(f"Ready! Loaded {len(df)} rows.")
+    # Sort by tick and set as index for O(1) lookups (was O(N) full scan before)
+    df = df.sort_values('tick').set_index('tick', drop=False)
 
     header = parser.parse_header()
     map_name = header.get("map_name", "unknown")
@@ -207,6 +242,13 @@ def load_and_start(demo_path: str):
 
     tick_boundaries = np.array(tick_boundaries_list)
     round_numbers = np.array(round_numbers_list)
+
+    # Pre-compute round_num column vectorized (was O(N) Python listcomp per heatmap request)
+    tick_values = df['tick'].values
+    indices = np.searchsorted(tick_boundaries, tick_values, side='right') - 1
+    indices = np.clip(indices, 0, len(round_numbers) - 1)
+    df['round_num'] = round_numbers[indices]
+    print(f"Round column computed for {len(df)} rows.")
 
     # Build available rounds list (all real rounds including pistol round 1)
     available_rounds = list(range(1, num_real_rounds + 1))

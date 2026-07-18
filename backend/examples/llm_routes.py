@@ -6,6 +6,7 @@ rather than errors — the LLM is an enhancement, not a requirement.
 """
 
 import sys
+import asyncio
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -35,9 +36,9 @@ def _get_client() -> LLMClient:
 
 @pa.app.get("/api/llm/status")
 async def get_llm_status():
-    """Check LLM availability."""
+    """Check LLM availability (non-blocking — runs HTTP check in thread)."""
     client = _get_client()
-    available = client.is_available()
+    available = await asyncio.to_thread(client.is_available)
     return {
         "available": available,
         "model": client.model,
@@ -84,7 +85,10 @@ async def explain_tick(tick: int):
         intent_predictions=intent_text or "(No intent predictions available)",
     )
 
-    result = client.generate(prompt, system=COACH_SYSTEM_PROMPT, max_tokens=512)
+    # Run blocking LLM call in thread to avoid blocking the async event loop
+    result = await asyncio.to_thread(
+        client.generate, prompt, system=COACH_SYSTEM_PROMPT, max_tokens=512
+    )
 
     return {
         "tick": tick,
@@ -145,7 +149,9 @@ async def narrate_round(round_num: int):
     round_data = serializer.serialize_round_summary(round_num, round_info)
     prompt = ROUND_NARRATIVE_PROMPT.format(round_num=round_num, round_data=round_data)
 
-    result = client.generate(prompt, system=COACH_SYSTEM_PROMPT, max_tokens=400)
+    result = await asyncio.to_thread(
+        client.generate, prompt, system=COACH_SYSTEM_PROMPT, max_tokens=400
+    )
 
     return {
         "round_num": round_num,
@@ -191,7 +197,8 @@ async def chat_with_coach(request: dict):
         user_query=user_message,
     )
 
-    result = client.generate(
+    result = await asyncio.to_thread(
+        client.generate,
         prompt,
         system=COACH_SYSTEM_PROMPT,
         max_tokens=400,
