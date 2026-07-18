@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Image as KonvaImage } from "react-konva";
 
 interface MapBounds {
@@ -79,7 +79,8 @@ function renderHeatmap(
   positions: Array<{ X: number; Y: number }>,
   bounds: MapBounds,
   canvasW: number,
-  canvasH: number
+  canvasH: number,
+  reuseCanvas?: HTMLCanvasElement | null,
 ): HTMLCanvasElement | null {
   if (canvasW <= 0 || canvasH <= 0) {
     console.warn("Heatmap: invalid canvas dimensions", canvasW, canvasH);
@@ -88,10 +89,12 @@ function renderHeatmap(
 
   console.log(`Heatmap: rendering ${positions.length} points onto ${canvasW}x${canvasH} canvas`);
 
-  const canvas = document.createElement("canvas");
+  // Reuse existing canvas or create a new one
+  const canvas = reuseCanvas || document.createElement("canvas");
   canvas.width = canvasW;
   canvas.height = canvasH;
   const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+  ctx.clearRect(0, 0, canvasW, canvasH);
 
   // Adaptive parameters: fewer points → larger radius + higher intensity
   const radius = Math.round(12 + 200 / Math.sqrt(positions.length));
@@ -163,13 +166,12 @@ export default function HeatmapLayer({
 }: HeatmapLayerProps) {
   const [heatmapCanvas, setHeatmapCanvas] = useState<HTMLCanvasElement | null>(null);
   const renderIdRef = useRef(0);
+  // Reuse a single offscreen canvas to avoid GC pressure
+  const offscreenRef = useRef<HTMLCanvasElement | null>(null);
+  // Debounce resize-triggered re-renders
+  const resizeTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  useEffect(() => {
-    console.log(
-      "HeatmapLayer useEffect:",
-      { visible, positionsLen: positions.length, imageWidth, imageHeight }
-    );
-
+  const doRender = useCallback(() => {
     if (!visible || positions.length === 0 || imageWidth <= 0 || imageHeight <= 0) {
       setHeatmapCanvas(null);
       return;
@@ -181,7 +183,14 @@ export default function HeatmapLayer({
       console.log("HeatmapLayer: starting render, id=", renderId);
       const start = performance.now();
 
-      const canvas = renderHeatmap(positions, mapBounds, imageWidth, imageHeight);
+      const canvas = renderHeatmap(
+        positions, mapBounds, imageWidth, imageHeight,
+        offscreenRef.current,
+      );
+      // Keep reference for reuse
+      if (canvas) {
+        offscreenRef.current = canvas;
+      }
 
       const elapsed = performance.now() - start;
       console.log(`HeatmapLayer: render took ${elapsed.toFixed(1)}ms`);
@@ -193,6 +202,22 @@ export default function HeatmapLayer({
 
     return () => cancelAnimationFrame(rafId);
   }, [positions, mapBounds, imageWidth, imageHeight, visible]);
+
+  useEffect(() => {
+    // Debounce resize-triggered renders by 150ms
+    if (resizeTimerRef.current) {
+      clearTimeout(resizeTimerRef.current);
+    }
+    resizeTimerRef.current = setTimeout(() => {
+      doRender();
+    }, 150);
+
+    return () => {
+      if (resizeTimerRef.current) {
+        clearTimeout(resizeTimerRef.current);
+      }
+    };
+  }, [doRender]);
 
   if (!visible || !heatmapCanvas) {
     console.log("HeatmapLayer: returning null", { visible, hasCanvas: !!heatmapCanvas });

@@ -1,12 +1,13 @@
 """Rule-based intent predictor — predicts player movement and actions without ML.
 
-Uses pre-built position lookup cache for O(1) queries instead of
-O(N) DataFrame scans on every request.
+Uses the indexed DataFrame for O(1) tick lookups instead of
+O(N) cache iteration or DataFrame scans.
 """
 
 import math
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 
 
@@ -14,7 +15,7 @@ class RuleBasedIntentPredictor:
     """Predicts player intent using velocity extrapolation and zone graph.
 
     No ML, no training — predictions are computed live from parsed tick data.
-    Builds a position cache on first use for fast lookups.
+    Uses the indexed DataFrame directly for O(log N) position lookups.
     """
 
     TEAM_CT = "CT"
@@ -38,34 +39,32 @@ class RuleBasedIntentPredictor:
         from .zone_graph import MapZoneGraph
         self.zone_graph = MapZoneGraph(self.map_name)
 
-        # Position cache: (tick, steamid) -> (x, y, z, is_alive, team_name, name)
-        self._cache: dict = {}
-        self._cache_built = False
+        # Reference to the indexed DataFrame (set on first predict call)
+        self._df: pd.DataFrame | None = None
 
-    def _build_cache(self, df: pd.DataFrame):
-        """Build O(1) lookup cache from the full DataFrame.
-
-        Called once on first prediction request. Converts 3M+ row
-        DataFrame scans into hash-table lookups.
-        """
-        if self._cache_built:
-            return
-
-        for _, row in df.iterrows():
-            key = (int(row["tick"]), str(row["steamid"]))
-            self._cache[key] = (
-                float(row["X"]),
-                float(row["Y"]),
-                float(row.get("Z", 0)),
-                bool(row.get("is_alive", True)),
-                str(row.get("team_name", "")),
-                str(row.get("name", "Unknown")),
-            )
-        self._cache_built = True
-
-    def _get_position(self, tick: int, steamid: str):
-        """O(1) position lookup. Returns (x, y, z, is_alive, team, name) or None."""
-        return self._cache.get((tick, str(steamid)))
+    def _get_position(self, tick: int, steamid: str) -> tuple | None:
+        """O(log N) position lookup using indexed DataFrame (was O(1) dict lookup
+        but with huge memory overhead and slow build time)."""
+        df = self._df
+        if df is None:
+            return None
+        try:
+            tick_data = df.loc[tick]
+        except KeyError:
+            return None
+        if isinstance(tick_data, pd.Series):
+            tick_data = tick_data.to_frame().T
+        match = tick_data[tick_data['steamid'].astype(str) == str(steamid)]
+        if match.empty:
+            return None
+        row = match.iloc[0]
+        return (
+            float(row['X']), float(row['Y']),
+            float(row.get('Z', 0)),
+            bool(row.get('is_alive', True)),
+            str(row.get('team_name', '')),
+            str(row.get('name', 'Unknown')),
+        )
 
     def predict(
         self, tick: int, df: pd.DataFrame,
@@ -73,60 +72,49 @@ class RuleBasedIntentPredictor:
     ) -> dict:
         """Predict intent for alive players at a given tick.
 
-        Args:
-            tick: Current game tick
-            df: Full parsed DataFrame (used once to build cache)
-            team_filter: 'CT' or 'TERRORIST' to filter, '' for all
-            steamid_filter: specific steamid, '' for all
+        Uses O(1) indexed DataFrame lookup instead of O(N) cache iteration.
         """
-        # Build cache on first call
-        if not self._cache_built:
-            self._build_cache(df)
+        # Store reference to indexed DataFrame
+        self._df = df
 
-        players = []
-        ct_alive = 0
-        t_alive = 0
+        # O(1) index lookup to find all players at this tick (was O(N) cache iteration)
+        try:
+            tick_data = df.loc[tick]
+        except KeyError:
+            return {"tick": tick, "players": []}
+        if isinstance(tick_data, pd.Series):
+            tick_data = tick_data.to_frame().T
 
-        # Single pass to collect alive players + counts
-        for key, val in self._cache.items():
-            t, sid = key
-            if t != tick:
-                continue
-            x, y, z, alive, team, name = val
-            if not alive:
-                continue
-            if team_filter and team != team_filter:
-                continue
-            if steamid_filter and sid != steamid_filter:
-                continue
+        # Filter to alive players
+        alive = tick_data[tick_data['is_alive'] == True]
+        if team_filter:
+            alive = alive[alive['team_name'] == team_filter]
+        if steamid_filter:
+            alive = alive[alive['steamid'].astype(str) == steamid_filter]
 
-            players.append({
-                "steamid": sid,
-                "name": name,
-                "team": team,
-                "x": x, "y": y, "z": z,
-                "is_ct": team == self.TEAM_CT,
-            })
-            if team == self.TEAM_CT:
-                ct_alive += 1
-            elif team == self.TEAM_T:
-                t_alive += 1
-
-        if not players:
+        if alive.empty:
             return {"tick": tick, "players": []}
 
+        # Count teams for zone-aware predictions
+        ct_alive = int((alive['team_name'] == self.TEAM_CT).sum())
+        t_alive = int((alive['team_name'] == self.TEAM_T).sum())
+
         predictions = []
-        for p in players:
-            vel_x, vel_y = self._compute_velocity_fast(p["steamid"], tick)
-            current_zone = self.zone_graph.get_zone(p["x"], p["y"])
+        for _, p in alive.iterrows():
+            sid = str(p['steamid'])
+            x, y, z = float(p['X']), float(p['Y']), float(p.get('Z', 0))
+            is_ct = p['team_name'] == self.TEAM_CT
+
+            vel_x, vel_y = self._compute_velocity_fast(sid, tick)
+            current_zone = self.zone_graph.get_zone(x, y)
             next_zone = self.zone_graph.predict_next_zone(
-                current_zone, vel_x, vel_y, ct_alive, t_alive, p["is_ct"]
+                current_zone, vel_x, vel_y, ct_alive, t_alive, is_ct
             )
             pred_path = self._extrapolate_path(
-                p["x"], p["y"], p["z"], vel_x, vel_y, tick, current_zone, next_zone
+                x, y, z, vel_x, vel_y, tick, current_zone, next_zone
             )
             action, _ = self._classify_action_fast(
-                p["steamid"], tick, vel_x, vel_y, current_zone, p["is_ct"]
+                sid, tick, vel_x, vel_y, current_zone, is_ct
             )
             speed = math.sqrt(vel_x ** 2 + vel_y ** 2)
             conf = self._compute_confidence(speed, current_zone, next_zone, action)
@@ -135,10 +123,10 @@ class RuleBasedIntentPredictor:
             action_probs[action] = 0.7
 
             predictions.append({
-                "steamid": p["steamid"],
-                "name": p["name"],
-                "team": "CT" if p["is_ct"] else "T",
-                "current_position": {"x": p["x"], "y": p["y"], "z": p["z"]},
+                "steamid": sid,
+                "name": p.get('name', 'Unknown'),
+                "team": "CT" if is_ct else "T",
+                "current_position": {"x": x, "y": y, "z": z},
                 "predictions": pred_path,
                 "action": action,
                 "action_probs": action_probs,
@@ -150,7 +138,7 @@ class RuleBasedIntentPredictor:
         return {"tick": tick, "players": predictions}
 
     def _compute_velocity_fast(self, steamid: str, tick: int) -> tuple[float, float]:
-        """Fast velocity using cache lookups (no DataFrame scans)."""
+        """Fast velocity using indexed DataFrame lookups (no cache needed)."""
         cur = self._get_position(tick, steamid)
         if cur is None:
             return (0.0, 0.0)
@@ -177,7 +165,7 @@ class RuleBasedIntentPredictor:
         vel_x: float, vel_y: float,
         current_zone: Optional[str], is_ct: bool,
     ) -> tuple[str, float]:
-        """Classify action using cache lookups."""
+        """Classify action using indexed DataFrame lookups."""
         speed = math.sqrt(vel_x ** 2 + vel_y ** 2)
 
         if speed < self.HOLDING_SPEED_THRESHOLD:

@@ -1,10 +1,10 @@
 import { Stage, Layer, Image } from "react-konva";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import PlayerMarker from "./PlayerMarker";
 import HeatmapLayer from "./HeatmapLayer";
 import IntentLayer from "./IntentLayer";
 import ChatPanel from "./ChatPanel";
-import type { Player, PlayerInfo, HeatmapData, RoundsData, RoundInfo } from "../types/Player";
+import type { Player, PlayerInfo, HeatmapData, RoundInfo } from "../types/Player";
 import dust2 from "../assets/maps/dust2.png";
 import inferno from "../assets/maps/inferno.png";
 
@@ -41,9 +41,10 @@ const mapImages = {
 
 interface MapCanvasProps {
   currentTick: number;
+  rounds: RoundInfo[];
 }
 
-export default function MapCanvas({ currentTick }: MapCanvasProps) {
+export default function MapCanvas({ currentTick, rounds }: MapCanvasProps) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [mapImage, setMapImage] = useState<HTMLImageElement | null>(null);
   const [dimensions, setDimensions] = useState({
@@ -60,7 +61,6 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
   const [showIntent, setShowIntent] = useState<boolean>(false);
   const [showChat, setShowChat] = useState<boolean>(false);
   const [heatmapPositions, setHeatmapPositions] = useState<Array<{ X: number; Y: number }>>([]);
-  const [rounds, setRounds] = useState<RoundInfo[]>([]);
   const [selectedRound, setSelectedRound] = useState<number>(0); // 0 = all rounds
 
   //Map loading hook
@@ -100,20 +100,6 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
       }
     }
     fetchPlayers();
-  }, []);
-
-  // Fetch available rounds
-  useEffect(() => {
-    async function fetchRounds() {
-      try {
-        const response = await fetch("http://localhost:8000/api/rounds");
-        const data: RoundsData = await response.json();
-        setRounds(data.rounds || []);
-      } catch (error) {
-        console.error("Error fetching rounds:", error);
-      }
-    }
-    fetchRounds();
   }, []);
 
   // Fetch heatmap data when filters change
@@ -173,7 +159,7 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
   }, [currentTick]);
 
   // Calculate scale to fit map within viewport while maintaining aspect ratio
-  const getScaleFactor = () => {
+  const { scale, width, height } = useMemo(() => {
     if (!mapImage) return { scale: 1, width: 0, height: 0 };
 
     const padding = 0;
@@ -189,27 +175,25 @@ export default function MapCanvas({ currentTick }: MapCanvasProps) {
       width: mapImage.width * scale,
       height: mapImage.height * scale
     };
-  };
+  }, [mapImage, dimensions]);
 
-  const { scale, width, height } = getScaleFactor();
-
-  const getCanvasCoords = (gameX: number, gameY: number) => {
-    if (gameX === undefined || gameY === undefined) return { x: 0, y: 0 };
-
+  // Memoized coordinate conversion — recomputes only when bounds/dimensions change
+  const getCanvasCoords = useMemo(() => {
     const bounds = activeMapBounds;
-    const xcoorperpixel = (bounds.maxX - bounds.minX) / width;
-    const ycoorperpixel = (bounds.maxY - bounds.minY) / height;
-
-    const gameXnorm = gameX - bounds.minX;
-    const gameYnorm = bounds.maxY - gameY;
-
+    const xcoorperpixel = (bounds.maxX - bounds.minX) / (width || 1);
+    const ycoorperpixel = (bounds.maxY - bounds.minY) / (height || 1);
     const offsetX = (dimensions.width - width) / 2;
 
-    const canvasX = (gameXnorm / xcoorperpixel) + offsetX;
-    const canvasY = (gameYnorm / ycoorperpixel);
-
-    return { x: canvasX, y: canvasY };
-  };
+    return (gameX: number, gameY: number) => {
+      if (gameX === undefined || gameY === undefined) return { x: 0, y: 0 };
+      const gameXnorm = gameX - bounds.minX;
+      const gameYnorm = bounds.maxY - gameY;
+      return {
+        x: (gameXnorm / xcoorperpixel) + offsetX,
+        y: (gameYnorm / ycoorperpixel),
+      };
+    };
+  }, [activeMapBounds, width, height, dimensions.width]);
 
   const mapOffsetX = (dimensions.width - width) / 2;
   const mapOffsetY = (dimensions.height - height) / 2;

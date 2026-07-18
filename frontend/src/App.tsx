@@ -104,7 +104,7 @@ function App() {
         </button>
       </div>
 
-      <MapCanvas currentTick={currentTick} />
+      <MapCanvas currentTick={currentTick} rounds={rounds} />
     </div>
   )
 }
