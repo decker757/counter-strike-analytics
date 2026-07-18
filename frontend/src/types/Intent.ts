@@ -19,6 +19,8 @@ export interface IntentPlayerPrediction {
   confidence: number;
   current_zone: string | null;
   predicted_zone: string | null;
+  objective_zone: string | null;
+  zone_path: string[];
 }
 
 export interface IntentResponse {

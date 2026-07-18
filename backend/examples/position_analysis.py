@@ -47,6 +47,36 @@ async def get_tick_state(tick: int):
     return tick_data.to_dict(orient="records")
 
 
+@app.get("/api/state-range")
+async def get_state_range(start: int, end: int):
+    """Return all player states for ticks in [start, end] as a dict keyed by tick.
+
+    Much more efficient than N individual /api/state/{tick} calls.
+    The frontend tick buffer uses this for prefetching ~256 ticks at once.
+    """
+    global df
+    if df.empty:
+        return {"error": "No data loaded", "states": {}}
+
+    try:
+        tick_data = df.loc[start:end]
+    except KeyError:
+        return {"states": {}, "start": start, "end": end}
+
+    if isinstance(tick_data, pd.Series):
+        tick_data = tick_data.to_frame().T
+
+    if tick_data.empty:
+        return {"states": {}, "start": start, "end": end}
+
+    # Group by tick (index) and serialize each tick's players
+    result = {}
+    for tick_val, group in tick_data.groupby(level=0):
+        result[int(tick_val)] = group.to_dict(orient="records")
+
+    return {"states": result, "start": start, "end": end}
+
+
 @app.get("/api/map")
 async def get_map():
     return {

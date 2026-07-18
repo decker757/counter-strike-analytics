@@ -4,7 +4,9 @@ import PlayerMarker from "./PlayerMarker";
 import HeatmapLayer from "./HeatmapLayer";
 import IntentLayer from "./IntentLayer";
 import ChatPanel from "./ChatPanel";
-import type { Player, PlayerInfo, HeatmapData, RoundInfo } from "../types/Player";
+import { ErrorBoundary } from "./ErrorBoundary";
+import { useTickBuffer } from "../hooks/useTickBuffer";
+import type { PlayerInfo, HeatmapData, RoundInfo } from "../types/Player";
 import dust2 from "../assets/maps/dust2.png";
 import inferno from "../assets/maps/inferno.png";
 
@@ -42,10 +44,12 @@ const mapImages = {
 interface MapCanvasProps {
   currentTick: number;
   rounds: RoundInfo[];
+  isPlaying: boolean;
 }
 
-export default function MapCanvas({ currentTick, rounds }: MapCanvasProps) {
-  const [players, setPlayers] = useState<Player[]>([]);
+export default function MapCanvas({ currentTick, rounds, isPlaying }: MapCanvasProps) {
+  const players = useTickBuffer(currentTick);
+
   const [mapImage, setMapImage] = useState<HTMLImageElement | null>(null);
   const [dimensions, setDimensions] = useState({
     width: window.innerWidth,
@@ -61,34 +65,24 @@ export default function MapCanvas({ currentTick, rounds }: MapCanvasProps) {
   const [showIntent, setShowIntent] = useState<boolean>(false);
   const [showChat, setShowChat] = useState<boolean>(false);
   const [heatmapPositions, setHeatmapPositions] = useState<Array<{ X: number; Y: number }>>([]);
-  const [selectedRound, setSelectedRound] = useState<number>(0); // 0 = all rounds
+  const [selectedRound, setSelectedRound] = useState<number>(0);
 
-  //Map loading hook
+  // Map loading
   useEffect(() => {
     async function loadMap() {
         const response = await fetch("http://localhost:8000/api/map");
         const data: MapResponse = await response.json();
-
-        // Strip "de_" prefix from map name (e.g. "de_inferno" → "inferno")
         const mapKey = data.map_name.replace(/^de_/, "") as keyof typeof mapImages;
-
-        // Set active map bounds based on loaded map
         const bounds = MAP_CONFIG[mapKey];
-        if (bounds) {
-          setActiveMapBounds(bounds);
-        }
-
+        if (bounds) setActiveMapBounds(bounds);
         const img = new window.Image();
         img.src = mapImages[mapKey];
-
-        img.onload = () => {
-            setMapImage(img);
-        };
+        img.onload = () => setMapImage(img);
     }
     loadMap();
   }, []);
 
-  // Fetch player list for heatmap filter
+  // Player list
   useEffect(() => {
     async function fetchPlayers() {
       try {
@@ -102,8 +96,11 @@ export default function MapCanvas({ currentTick, rounds }: MapCanvasProps) {
     fetchPlayers();
   }, []);
 
-  // Fetch heatmap data when filters change
+  // Heatmap fetch
   useEffect(() => {
+    setHeatmapPositions([]);
+    const controller = new AbortController();
+
     async function fetchHeatmap() {
       try {
         const sampleRate = selectedRound > 0 ? 8 : (selectedPlayer ? 64 : 128);
@@ -114,83 +111,50 @@ export default function MapCanvas({ currentTick, rounds }: MapCanvasProps) {
         params.set("sample_rate", String(sampleRate));
 
         const url = `http://localhost:8000/api/heatmap?${params.toString()}`;
-        console.log("Fetching heatmap:", url);
-        const response = await fetch(url);
+        const response = await fetch(url, { signal: controller.signal });
         const data: HeatmapData = await response.json();
-        console.log("Heatmap data received:", data.steamid, "team:", data.team, "round:", data.round_num, "positions:", data.positions?.length);
         setHeatmapPositions(data.positions || []);
       } catch (error) {
-        console.error("Error fetching heatmap data:", error);
+        if ((error as Error).name !== "AbortError") {
+          console.error("Error fetching heatmap data:", error);
+        }
       }
     }
     fetchHeatmap();
+    return () => controller.abort();
   }, [selectedPlayer, selectedTeam, selectedRound]);
 
-  //window resize hook
+  // Window resize
   useEffect(() => {
     const handleResize = () => {
-      setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
+      setDimensions({ width: window.innerWidth, height: window.innerHeight });
     };
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  //data fetching hook
-  useEffect(() => {
-    const fetchTickData = async () => {
-      if (Number.isInteger(currentTick) == false || currentTick % 2 != 0) {
-        return
-      }
-      try {
-        const response = await fetch(`http://localhost:8000/api/state/${currentTick}`);
-        if (!response.ok) throw new Error("Network response was not ok");
-        const data = await response.json();
-        setPlayers(data);
-      } catch (error) {
-        console.error("Error fetching player positions:", error);
-      }
-    };
-
-    fetchTickData();
-  }, [currentTick]);
-
-  // Calculate scale to fit map within viewport while maintaining aspect ratio
+  // Memoized scale
   const { scale, width, height } = useMemo(() => {
     if (!mapImage) return { scale: 1, width: 0, height: 0 };
-
-    const padding = 0;
-    const availableWidth = dimensions.width - padding;
-    const availableHeight = dimensions.height - padding;
-
+    const availableWidth = dimensions.width;
+    const availableHeight = dimensions.height;
     const scaleX = availableWidth / mapImage.width;
     const scaleY = availableHeight / mapImage.height;
-    const scale = Math.min(scaleX, scaleY);
-
-    return {
-      scale,
-      width: mapImage.width * scale,
-      height: mapImage.height * scale
-    };
+    const s = Math.min(scaleX, scaleY);
+    return { scale: s, width: mapImage.width * s, height: mapImage.height * s };
   }, [mapImage, dimensions]);
 
-  // Memoized coordinate conversion — recomputes only when bounds/dimensions change
+  // Memoized coordinate conversion
   const getCanvasCoords = useMemo(() => {
     const bounds = activeMapBounds;
-    const xcoorperpixel = (bounds.maxX - bounds.minX) / (width || 1);
-    const ycoorperpixel = (bounds.maxY - bounds.minY) / (height || 1);
-    const offsetX = (dimensions.width - width) / 2;
-
+    const xr = (bounds.maxX - bounds.minX) / (width || 1);
+    const yr = (bounds.maxY - bounds.minY) / (height || 1);
+    const ox = (dimensions.width - width) / 2;
     return (gameX: number, gameY: number) => {
       if (gameX === undefined || gameY === undefined) return { x: 0, y: 0 };
-      const gameXnorm = gameX - bounds.minX;
-      const gameYnorm = bounds.maxY - gameY;
       return {
-        x: (gameXnorm / xcoorperpixel) + offsetX,
-        y: (gameYnorm / ycoorperpixel),
+        x: ((gameX - bounds.minX) / xr) + ox,
+        y: ((bounds.maxY - gameY) / yr),
       };
     };
   }, [activeMapBounds, width, height, dimensions.width]);
@@ -198,101 +162,124 @@ export default function MapCanvas({ currentTick, rounds }: MapCanvasProps) {
   const mapOffsetX = (dimensions.width - width) / 2;
   const mapOffsetY = (dimensions.height - height) / 2;
 
+  const hasPlayers = players.length > 0;
+
   return (
     <div style={{ position: "relative" }}>
-      {/* Controls overlay */}
+      {/* ── Map Loading Overlay ── */}
+      {!mapImage && (
+        <div className="map-loading">
+          <div className="map-loading-text">
+            <span className="loading-dot" />
+            <span className="loading-dot" />
+            <span className="loading-dot" />
+            &nbsp;Loading map…
+          </div>
+        </div>
+      )}
+
+      {/* ── Controls Overlay ── */}
       <div style={{
         position: "absolute",
-        top: 10,
-        left: 10,
+        top: 80,
+        left: 16,
         zIndex: 10,
-        background: "rgba(0, 0, 0, 0.75)",
-        padding: "10px 14px",
-        borderRadius: 8,
         display: "flex",
-        gap: 12,
-        alignItems: "center",
-        color: "#fff",
-        fontSize: 13,
-        fontFamily: "sans-serif",
+        flexDirection: "column",
+        gap: 6,
       }}>
-        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-          <input
-            type="checkbox"
-            checked={showHeatmap}
-            onChange={(e) => setShowHeatmap(e.target.checked)}
-          />
-          Heatmap
-        </label>
+        <div className="glass-panel" style={{ padding: "10px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+          {/* Heatmap toggle */}
+          <label className="toggle-label">
+            <input
+              type="checkbox"
+              checked={showHeatmap}
+              onChange={(e) => setShowHeatmap(e.target.checked)}
+            />
+            🔥 Heatmap
+          </label>
 
-        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-          <input
-            type="checkbox"
-            checked={showIntent}
-            onChange={(e) => setShowIntent(e.target.checked)}
-          />
-          Show Intent
-        </label>
+          {/* Intent toggle */}
+          <label className="toggle-label">
+            <input
+              type="checkbox"
+              checked={showIntent}
+              onChange={(e) => setShowIntent(e.target.checked)}
+            />
+            🎯 Show Intent
+          </label>
 
-        {(showHeatmap || showIntent) && (
-          <>
-            <select
-              value={selectedTeam}
-              onChange={(e) => setSelectedTeam(e.target.value)}
-              style={{ padding: "3px 6px", fontSize: 13, borderRadius: 4 }}
-            >
-              <option value="">All Teams</option>
-              <option value="CT">CT</option>
-              <option value="TERRORIST">T</option>
-            </select>
-            <select
-              value={selectedPlayer}
-              onChange={(e) => setSelectedPlayer(e.target.value)}
-              style={{ padding: "3px 6px", fontSize: 13, borderRadius: 4 }}
-            >
-              <option value="">All Players</option>
-              {playerList
-                .filter((p) => !selectedTeam || p.team_name === selectedTeam)
-                .map((p) => (
-                  <option key={p.steamid} value={p.steamid}>
-                    {p.name} ({p.team_name})
-                  </option>
-                ))}
-            </select>
-            <select
-              value={selectedRound}
-              onChange={(e) => setSelectedRound(Number(e.target.value))}
-              style={{ padding: "3px 6px", fontSize: 13, borderRadius: 4 }}
-            >
-              <option value="0">All Rounds</option>
-              {rounds.map((r) => (
-                <option key={r.round_num} value={r.round_num}>
-                  Round {r.round_num}
-                </option>
-              ))}
-            </select>
-          </>
+          {/* Filters (visible when either is active) */}
+          {(showHeatmap || showIntent) && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 2, paddingTop: 6, borderTop: "1px solid var(--border-subtle)" }}>
+              <select
+                className="select"
+                value={selectedTeam}
+                onChange={(e) => setSelectedTeam(e.target.value)}
+                style={{ width: "100%" }}
+              >
+                <option value="">All Teams</option>
+                <option value="CT">🔵 CT</option>
+                <option value="TERRORIST">🟠 T</option>
+              </select>
+
+              <select
+                className="select"
+                value={selectedPlayer}
+                onChange={(e) => setSelectedPlayer(e.target.value)}
+                style={{ width: "100%" }}
+              >
+                <option value="">All Players</option>
+                {playerList
+                  .filter((p) => !selectedTeam || p.team_name === selectedTeam)
+                  .map((p) => (
+                    <option key={p.steamid} value={p.steamid}>
+                      {p.name}
+                    </option>
+                  ))}
+              </select>
+
+              {showHeatmap && (
+                <select
+                  className="select"
+                  value={selectedRound}
+                  onChange={(e) => setSelectedRound(Number(e.target.value))}
+                  style={{ width: "100%" }}
+                >
+                  <option value="0">All Rounds</option>
+                  {rounds.map((r) => (
+                    <option key={r.round_num} value={r.round_num}>
+                      Round {r.round_num}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Buffer loading indicator */}
+        {isPlaying && !hasPlayers && (
+          <div className="glass-panel" style={{ padding: "6px 12px", display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
+            <span className="loading-dot" />
+            <span className="loading-dot" />
+            <span className="loading-dot" />
+            Buffering…
+          </div>
         )}
 
+        {/* Chat toggle */}
         <button
+          className={`btn ${showChat ? 'btn-primary glow-active' : ''}`}
           onClick={() => setShowChat(!showChat)}
-          style={{
-            padding: "4px 10px",
-            background: showChat ? "#4CAF50" : "rgba(255,255,255,0.15)",
-            border: "none",
-            borderRadius: 4,
-            color: "#fff",
-            cursor: "pointer",
-            fontSize: 12,
-            whiteSpace: "nowrap",
-          }}
+          style={{ width: "100%" }}
         >
           🤖 Coach Chat
         </button>
       </div>
 
+      {/* ── Konva Stage ── */}
       <Stage width={dimensions.width} height={dimensions.height}>
-        {/* Layer 1: Map image */}
         <Layer>
           {mapImage && (
             <Image
@@ -305,10 +292,10 @@ export default function MapCanvas({ currentTick, rounds }: MapCanvasProps) {
           )}
         </Layer>
 
-        {/* Layer 2: Heatmap (between map and markers) */}
         <Layer>
           {showHeatmap && heatmapPositions.length > 0 && (
             <HeatmapLayer
+              key={`${selectedPlayer}|${selectedTeam}|${selectedRound}`}
               positions={heatmapPositions}
               mapBounds={activeMapBounds}
               imageWidth={width}
@@ -320,7 +307,6 @@ export default function MapCanvas({ currentTick, rounds }: MapCanvasProps) {
           )}
         </Layer>
 
-        {/* Layer 2.5: Intent predictions (between heatmap and markers) */}
         <Layer>
           {showIntent && (
             <IntentLayer
@@ -337,13 +323,10 @@ export default function MapCanvas({ currentTick, rounds }: MapCanvasProps) {
           )}
         </Layer>
 
-        {/* Layer 3: Player markers (on top) */}
         <Layer>
           {players.map(player => {
             if (player.X === undefined || player.Y === undefined) return null;
-
             const coords = getCanvasCoords(player.X, player.Y);
-
             return (
               <PlayerMarker
                 key={player.steamid}
@@ -359,12 +342,16 @@ export default function MapCanvas({ currentTick, rounds }: MapCanvasProps) {
         </Layer>
       </Stage>
 
-      {/* Chat Panel overlay */}
-      <ChatPanel
-        currentTick={currentTick}
-        visible={showChat}
-        onClose={() => setShowChat(false)}
-      />
+      {/* ── Chat Panel ── */}
+      <div className="chat-container">
+        <ErrorBoundary>
+          <ChatPanel
+            currentTick={currentTick}
+            visible={showChat}
+            onClose={() => setShowChat(false)}
+          />
+        </ErrorBoundary>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { Group, Circle, Line, Text } from "react-konva";
+import { Group, Circle, Line, Text, Rect } from "react-konva";
 import type { IntentPlayerPrediction, IntentResponse } from "../types/Intent";
 
 interface MapBounds {
@@ -22,14 +22,22 @@ interface IntentLayerProps {
 }
 
 const ACTION_COLORS: Record<string, string> = {
-  holding: "#00FF00",       // bright green
-  pushing: "#00BFFF",       // deep sky blue
-  rotating: "#FFD700",      // gold
-  falling_back: "#FF4444",  // bright red
+  holding: "#4CAF50",       // green — stationary defense
+  pushing: "#FF6D00",       // orange — aggressive push
+  rotating: "#2196F3",      // blue — repositioning
+  falling_back: "#F44336",  // red — retreating
 };
 
-const HORIZON_OPACITIES = [1.0, 0.8, 0.5];
-const HORIZON_RADII = [8, 6, 4];
+const ACTION_LABELS: Record<string, string> = {
+  holding: "Holding",
+  pushing: "Pushing",
+  rotating: "Rotating",
+  falling_back: "Falling Back",
+};
+
+const HORIZON_OPACITIES = [1.0, 0.65, 0.35];
+const HORIZON_RADII = [7, 5, 3];
+const HORIZON_STROKE_WIDTH = [3, 2, 1.5];
 const FETCH_INTERVAL_TICKS = 32;
 
 function gameToStage(
@@ -77,7 +85,6 @@ export default function IntentLayer({
       return;
     }
 
-    // Refetch immediately if filters changed
     const filtersChanged =
       selectedTeam !== lastFilters.current.team ||
       selectedPlayer !== lastFilters.current.player;
@@ -87,7 +94,6 @@ export default function IntentLayer({
       lastFetchTick.current = -1;
     }
 
-    // Throttle
     if (tick - lastFetchTick.current < FETCH_INTERVAL_TICKS && lastFetchTick.current > 0 && !filtersChanged) {
       return;
     }
@@ -100,22 +106,17 @@ export default function IntentLayer({
         const params = new URLSearchParams();
         if (selectedTeam) params.set("team", selectedTeam);
         if (selectedPlayer) params.set("steamid", selectedPlayer);
-
         const url = `http://localhost:8000/api/intent/${requestTick}?${params.toString()}`;
         const resp = await fetch(url);
         if (!resp.ok) return;
         const data: IntentResponse = await resp.json();
-
-        // Always accept the data — don't cancel stale responses
-        // (the latest response always wins since fetch ordering is preserved by throttle)
         if (!data.error && data.players && data.players.length > 0) {
           setIntentData(data);
         }
       } catch (_e) {
-        // Silently ignore — transient failures are normal
+        // Silently ignore transient failures
       }
     }
-
     fetchIntent();
   }, [tick, visible, selectedTeam, selectedPlayer]);
 
@@ -136,7 +137,18 @@ export default function IntentLayer({
 
       const items: React.ReactNode[] = [];
 
-      // Pulsing dot at current position to verify coordinates
+      // ── Shadow glow at current position ──
+      items.push(
+        <Circle
+          key={`${player.steamid}-glow`}
+          x={current.x} y={current.y}
+          radius={14}
+          fill={color}
+          opacity={0.2}
+        />
+      );
+
+      // ── Current position marker ──
       items.push(
         <Circle
           key={`${player.steamid}-current`}
@@ -144,31 +156,59 @@ export default function IntentLayer({
           radius={7}
           fill={color}
           stroke="#fff"
-          strokeWidth={2}
-          opacity={0.9}
+          strokeWidth={2.5}
+          opacity={0.95}
         />
       );
 
+      // ── Direction indicator (small line in velocity direction) ──
+      if (player.predictions.length > 0) {
+        const first = gameToStage(
+          player.predictions[0].x, player.predictions[0].y, b, w, h, ox, oy
+        );
+        const dx = first.x - current.x;
+        const dy = first.y - current.y;
+        const dirLen = Math.sqrt(dx * dx + dy * dy);
+        if (dirLen > 5) {
+          const ndx = (dx / dirLen) * 20;
+          const ndy = (dy / dirLen) * 20;
+          items.push(
+            <Line
+              key={`${player.steamid}-dir`}
+              points={[current.x, current.y, current.x + ndx, current.y + ndy]}
+              stroke={color}
+              strokeWidth={3}
+              opacity={0.8}
+              lineCap="round"
+            />
+          );
+        }
+      }
+
+      // ── Predicted path with gradient-style fading ──
       let prevX = current.x;
       let prevY = current.y;
 
       player.predictions.forEach((pred, i) => {
         const predPos = gameToStage(pred.x, pred.y, b, w, h, ox, oy);
-        const opacity = HORIZON_OPACITIES[i] || 0.5;
-        const radius = HORIZON_RADII[i] || 4;
+        const opacity = HORIZON_OPACITIES[i] || 0.35;
+        const radius = HORIZON_RADII[i] || 3;
+        const sw = HORIZON_STROKE_WIDTH[i] || 1.5;
 
-        // Thick arrow-like line from prev to predicted
+        // Dashed connector line
         items.push(
           <Line
             key={`${player.steamid}-arc-${i}`}
             points={[prevX, prevY, predPos.x, predPos.y]}
             stroke={color}
-            strokeWidth={3}
+            strokeWidth={sw}
             opacity={opacity}
             lineCap="round"
+            dash={i === 0 ? [] : [6, 4]}
           />
         );
-        // Bright circle at predicted position
+
+        // Predicted position dot
         items.push(
           <Circle
             key={`${player.steamid}-ghost-${i}`}
@@ -176,29 +216,69 @@ export default function IntentLayer({
             radius={radius}
             fill={color}
             stroke="#fff"
-            strokeWidth={1}
+            strokeWidth={0.8}
             opacity={opacity}
           />
         );
+
         prevX = predPos.x;
         prevY = predPos.y;
       });
 
-      // Large action label
-      if (player.predictions.length > 0) {
-        const lp = gameToStage(player.predictions[0].x, player.predictions[0].y, b, w, h, ox, oy);
+      // ── Action label with confidence ──
+      const labelText = `${ACTION_LABELS[player.action] || player.action} ${Math.round(player.confidence * 100)}%`;
+      const labelY = current.y - 28;
+
+      // Background pill
+      const labelWidth = labelText.length * 6.5 + 16;
+      items.push(
+        <Rect
+          key={`${player.steamid}-label-bg`}
+          x={current.x - labelWidth / 2}
+          y={labelY - 10}
+          width={labelWidth}
+          height={20}
+          fill="rgba(0, 0, 0, 0.75)"
+          cornerRadius={10}
+          stroke={color}
+          strokeWidth={1.5}
+          opacity={0.9}
+        />
+      );
+
+      items.push(
+        <Text
+          key={`${player.steamid}-label`}
+          x={current.x - labelWidth / 2}
+          y={labelY - 10}
+          width={labelWidth}
+          height={20}
+          text={labelText}
+          fontSize={11}
+          fill={color}
+          align="center"
+          verticalAlign="middle"
+          fontStyle="bold"
+        />
+      );
+
+      // ── Zone info (subtle, below label) ──
+      const zoneText = player.objective_zone
+        ? `${player.current_zone || "?"} → ${player.objective_zone}`
+        : player.current_zone || "";
+      if (zoneText && zoneText.length > 2) {
         items.push(
           <Text
-            key={`${player.steamid}-label`}
-            x={lp.x + 10} y={lp.y - 14}
-            text={`${player.action} (${Math.round(player.confidence * 100)}%)`}
-            fontSize={12}
-            fill={color}
-            stroke="#000"
-            strokeWidth={3}
-            fillAfterStrokeEnabled={true}
-            opacity={1.0}
-            fontStyle="bold"
+            key={`${player.steamid}-zone`}
+            x={current.x - 60}
+            y={labelY + 14}
+            width={120}
+            height={14}
+            text={zoneText}
+            fontSize={9}
+            fill="rgba(255,255,255,0.5)"
+            align="center"
+            fontStyle="italic"
           />
         );
       }

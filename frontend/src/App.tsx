@@ -1,5 +1,5 @@
 import MapCanvas from './components/MapCanvas'
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { RoundsData, RoundInfo } from "./types/Player"
 import './App.css'
 
@@ -11,7 +11,10 @@ function App() {
   const [rounds, setRounds] = useState<RoundInfo[]>([]);
   const [replayRound, setReplayRound] = useState<number>(0);
 
-  // Fetch available rounds for replay
+  const tickRef = useRef(0);
+  const lastFrameRef = useRef(0);
+  const rafRef = useRef(0);
+
   useEffect(() => {
     async function fetchRounds() {
       try {
@@ -25,20 +28,20 @@ function App() {
     fetchRounds();
   }, []);
 
-  const handleSeekToRound = (startTick: number, endTick: number) => {
+  const handleSeekToRound = useCallback((startTick: number, endTick: number) => {
+    tickRef.current = startTick;
     setCurrentTick(startTick);
     setReplayEndTick(endTick);
     setIsPlaying(true);
-  };
+  }, []);
 
-  const handleReplayClick = () => {
+  const handleReplayClick = useCallback(() => {
     const info = rounds.find((r) => r.round_num === replayRound);
     if (info) {
       handleSeekToRound(info.start_tick, info.end_tick);
     }
-  };
+  }, [rounds, replayRound, handleSeekToRound]);
 
-  // Auto-stop at round end
   useEffect(() => {
     if (replayEndTick !== null && currentTick >= replayEndTick) {
       setIsPlaying(false);
@@ -46,65 +49,105 @@ function App() {
     }
   }, [currentTick, replayEndTick]);
 
-  // Tick playback timer
   useEffect(() => {
-    let interval: number | undefined;
+    tickRef.current = currentTick;
+  }, [currentTick]);
 
-    if (isPlaying) {
-      const msPerTick = 15.6 / playbackSpeed;
-
-      interval = window.setInterval(() => {
-        setCurrentTick((prev) => prev + 1);
-      }, msPerTick);
-    } else {
-      clearInterval(interval);
+  // RAF-based playback
+  useEffect(() => {
+    if (!isPlaying) {
+      cancelAnimationFrame(rafRef.current);
+      return;
     }
 
-    return () => clearInterval(interval);
+    lastFrameRef.current = 0;
+
+    const loop = (now: number) => {
+      if (lastFrameRef.current === 0) {
+        lastFrameRef.current = now;
+        rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      const elapsed = now - lastFrameRef.current;
+      lastFrameRef.current = now;
+
+      const msPerTick = 15.625 / playbackSpeed;
+      tickRef.current += elapsed / msPerTick;
+
+      const roundedTick = Math.round(tickRef.current);
+      setCurrentTick(roundedTick);
+
+      rafRef.current = requestAnimationFrame(loop);
+    };
+
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
   }, [isPlaying, playbackSpeed]);
 
   return (
     <div>
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <h2>CS2 Match Analysis</h2>
-        <p>Current Tick: {currentTick}</p>
-
-        <button onClick={() => setIsPlaying(!isPlaying)}>
-          {isPlaying ? 'Pause' : 'Play'}
+      {/* ── Control Bar ── */}
+      <div className="control-bar animate-in">
+        {/* Play/Pause */}
+        <button
+          className={`btn ${isPlaying ? 'btn-primary' : 'btn-success'}`}
+          onClick={() => setIsPlaying(!isPlaying)}
+        >
+          {isPlaying ? '⏸ Pause' : '▶ Play'}
         </button>
 
-        <select onChange={(e) => setPlaybackSpeed(Number(e.target.value))}>
-          <option value='1'>1x Speed</option>
-          <option value='2'>2x Speed</option>
-          <option value='4'>4x Speed</option>
-        </select>
+        {/* Speed selector */}
+        <div className="control-group">
+          <span className="speed-badge">
+            {playbackSpeed}×
+          </span>
+          <select
+            className="select"
+            value={playbackSpeed}
+            onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
+          >
+            <option value={0.5}>0.5×</option>
+            <option value={1}>1×</option>
+            <option value={2}>2×</option>
+            <option value={4}>4×</option>
+          </select>
+        </div>
 
+        <span className="control-divider" />
+
+        {/* Tick counter */}
+        <span className="tick-display">
+          Tick {currentTick}
+        </span>
+
+        <span className="control-divider" />
+
+        {/* Round replay */}
         <select
+          className="select"
           value={replayRound}
           onChange={(e) => setReplayRound(Number(e.target.value))}
-          style={{ marginLeft: 12 }}
         >
-          <option value={0}>Replay Round...</option>
+          <option value={0}>↻ Replay Round…</option>
           {rounds.map((r) => (
             <option key={r.round_num} value={r.round_num}>
-              Round {r.round_num}
+              Round {r.round_num} (T{r.start_tick}–{r.end_tick})
             </option>
           ))}
         </select>
 
         <button
+          className="btn"
           onClick={handleReplayClick}
           disabled={replayRound === 0}
-          style={{
-            opacity: replayRound === 0 ? 0.5 : 1,
-            cursor: replayRound === 0 ? 'default' : 'pointer',
-          }}
         >
-          Replay
+          Go
         </button>
       </div>
 
-      <MapCanvas currentTick={currentTick} rounds={rounds} />
+      {/* ── Map ── */}
+      <MapCanvas currentTick={currentTick} rounds={rounds} isPlaying={isPlaying} />
     </div>
   )
 }
